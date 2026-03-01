@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "ritehire-filesystem": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/Users/nabeelsaeed/Documents/YES/ritehire-agentic-os"
+      ],
+      "env": {}
+    }
+  }
+}
