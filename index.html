@@ -27,6 +27,11 @@
   --card-bg: rgba(255,255,255,0.04);
   --card-border: rgba(255,255,255,0.08);
   --card-hover: rgba(255,255,255,0.07);
+  --card-bg-strong: rgba(255,255,255,0.07);
+  --text-strong: rgba(255,255,255,0.95);
+  --text-soft: rgba(239,244,255,0.7);
+  --shadow-deep: 0 28px 96px rgba(3,8,34,0.42);
+  --shadow-card: 0 20px 64px rgba(4,10,40,0.34);
   --glow-green: 0 0 20px rgba(76,175,80,0.3);
   --glow-red: 0 0 20px rgba(239,83,80,0.3);
   --glow-blue: 0 0 20px rgba(66,165,245,0.3);
@@ -35,7 +40,11 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-  background: var(--navy-deep);
+  background:
+    radial-gradient(circle at 14% -8%, rgba(232,240,255,0.2), transparent 30%),
+    radial-gradient(circle at 88% 0%, rgba(121,170,255,0.16), transparent 28%),
+    radial-gradient(circle at 82% 84%, rgba(76,175,80,0.12), transparent 26%),
+    linear-gradient(180deg, #0a1046 0%, #0c1553 38%, #09113d 100%);
   color: var(--white);
   font-family: 'Outfit', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   min-height: 100vh;
@@ -89,11 +98,11 @@ body::before {
   position: fixed;
   inset: 0;
   background: 
-    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(126,196,255,0.18) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at 78% 78%, rgba(76,175,80,0.1) 0%, transparent 50%),
-    linear-gradient(180deg, rgba(255,255,255,0.05), transparent 18%),
-    repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.012) 40px),
-    repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.012) 40px);
+    radial-gradient(ellipse 82% 60% at 18% 8%, rgba(255,255,255,0.12) 0%, transparent 54%),
+    radial-gradient(ellipse 65% 44% at 78% 76%, rgba(76,175,80,0.08) 0%, transparent 48%),
+    linear-gradient(180deg, rgba(255,255,255,0.07), transparent 20%),
+    repeating-linear-gradient(0deg, transparent, transparent 51px, rgba(255,255,255,0.01) 52px),
+    repeating-linear-gradient(90deg, transparent, transparent 51px, rgba(255,255,255,0.01) 52px);
   pointer-events: none;
   z-index: 0;
 }
@@ -108,11 +117,12 @@ body::before {
   right: 0;
   z-index: 200;
   background:
-    linear-gradient(180deg, rgba(18,26,96,0.92), rgba(10,18,78,0.9)),
+    radial-gradient(circle at top center, rgba(255,255,255,0.12), transparent 42%),
+    linear-gradient(180deg, rgba(18,26,96,0.94), rgba(10,18,78,0.92)),
     rgba(13,21,84,0.9);
-  border-bottom: 1px solid rgba(255,255,255,0.11);
-  box-shadow: 0 24px 60px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.08);
-  backdrop-filter: blur(22px);
+  border-bottom: 1px solid rgba(255,255,255,0.14);
+  box-shadow: 0 24px 70px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.1);
+  backdrop-filter: blur(26px) saturate(130%);
 }
 
 /* Push page content below fixed header */
@@ -138,14 +148,14 @@ body::before {
 .logo-mark {
   width: 48px; height: 48px;
   background:
-    linear-gradient(135deg, rgba(255,255,255,0.28), rgba(255,255,255,0.04)),
-    linear-gradient(135deg, #93d7bf, #5068d8);
-  border-radius: 14px;
+    linear-gradient(145deg, rgba(255,255,255,0.4), rgba(255,255,255,0.04)),
+    linear-gradient(135deg, #b8ead1, #6075e0);
+  border-radius: 16px;
   display: flex; align-items: center; justify-content: center;
   font-family: 'DM Serif Display', serif;
   font-size: 20px;
   font-weight: bold;
-  box-shadow: 0 16px 30px rgba(80,104,216,0.24), inset 0 1px 0 rgba(255,255,255,0.2);
+  box-shadow: 0 18px 36px rgba(80,104,216,0.24), inset 0 1px 0 rgba(255,255,255,0.26);
   border: 1px solid rgba(255,255,255,0.18);
 }
 
@@ -166,12 +176,13 @@ body::before {
   flex: 1;
   max-width: 620px;
   background:
-    radial-gradient(circle at top right, rgba(255,255,255,0.12), transparent 34%),
+    radial-gradient(circle at top right, rgba(255,255,255,0.14), transparent 34%),
+    linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03)),
     linear-gradient(90deg, rgba(76,175,80,0.12), rgba(57,73,171,0.12));
-  border: 1px solid rgba(255,255,255,0.14);
-  border-radius: 18px;
-  padding: 16px 22px;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: 24px;
+  padding: 18px 22px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), var(--shadow-card);
 }
 
 .obj-label { font-size: 10px; text-transform: uppercase; letter-spacing: 2.6px; color: #7bf1a5; margin-bottom: 6px; }
@@ -242,25 +253,26 @@ body::before {
 
 .tab {
   appearance: none;
-  padding: 11px 16px;
+  padding: 11px 18px;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
   color: rgba(255,255,255,0.56);
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.03);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.025));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
 }
 .tab:hover { color: rgba(255,255,255,0.86); background: rgba(255,255,255,0.055); border-color: rgba(255,255,255,0.12); }
 .tab:focus-visible { z-index: 2; }
 .tab.active {
   color: var(--white);
   background:
-    linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06));
-  border-color: rgba(255,255,255,0.16);
-  box-shadow: 0 10px 28px rgba(3,8,34,0.24), inset 0 1px 0 rgba(255,255,255,0.1);
+    radial-gradient(circle at top center, rgba(255,255,255,0.18), transparent 58%),
+    linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0.07));
+  border-color: rgba(255,255,255,0.2);
+  box-shadow: 0 12px 32px rgba(3,8,34,0.26), inset 0 1px 0 rgba(255,255,255,0.12);
   position: relative;
   transform: translateY(-1px);
 }
@@ -521,9 +533,11 @@ body::before {
 
 /* ── AGENT CARD ── */
 .agent-card {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  border-radius: 14px;
+  background:
+    radial-gradient(circle at top right, rgba(255,255,255,0.09), transparent 36%),
+    linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 18px;
   padding: 18px 16px;
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
@@ -549,10 +563,10 @@ body::before {
 .agent-card.status-standby::before { background: var(--orange); }
 
 .agent-card:hover {
-  background: var(--card-hover);
-  border-color: rgba(255,255,255,0.15);
-  transform: translateY(-3px);
-  box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+  background: rgba(255,255,255,0.09);
+  border-color: rgba(255,255,255,0.18);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-card);
 }
 
 .agent-card.selected {
@@ -796,14 +810,17 @@ body::before {
 }
 
 .stat-card {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  border-radius: 12px;
+  background:
+    radial-gradient(circle at top right, rgba(255,255,255,0.08), transparent 36%),
+    linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 20px;
   padding: 18px 20px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.22s ease;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 14px 40px rgba(5,10,40,0.2);
 }
-.stat-card:hover { background: var(--card-hover); transform: translateY(-2px); }
+.stat-card:hover { background: rgba(255,255,255,0.085); transform: translateY(-3px); border-color: rgba(255,255,255,0.16); }
 
 .stat-number { font-size: 32px; font-weight: 700; font-family: 'DM Serif Display', serif; line-height: 1; }
 .stat-label { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 4px; }
@@ -1229,13 +1246,13 @@ body::before {
 
 .glass-card {
   background:
-    radial-gradient(circle at top right, rgba(255,255,255,0.08), transparent 34%),
-    linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 18px;
+    radial-gradient(circle at top right, rgba(255,255,255,0.1), transparent 36%),
+    linear-gradient(180deg, rgba(255,255,255,0.09), rgba(255,255,255,0.03));
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 22px;
   padding: 18px 20px;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 20px 60px rgba(4,10,40,0.28);
-  backdrop-filter: blur(18px);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.09), var(--shadow-card);
+  backdrop-filter: blur(22px) saturate(130%);
 }
 
 .glass-card.soft {
@@ -1311,18 +1328,21 @@ body::before {
   align-items: flex-start;
   justify-content: space-between;
   gap: 14px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 16px;
+  background:
+    radial-gradient(circle at top right, rgba(255,255,255,0.08), transparent 32%),
+    linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.025));
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px;
   padding: 16px 18px;
-  transition: transform 0.2s, border-color 0.2s, background 0.2s;
+  transition: transform 0.2s, border-color 0.2s, background 0.2s, box-shadow 0.2s;
   cursor: pointer;
 }
 
 .portal-item:hover {
-  transform: translateY(-2px);
-  background: rgba(255,255,255,0.05);
-  border-color: rgba(255,255,255,0.14);
+  transform: translateY(-3px);
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.16);
+  box-shadow: 0 18px 42px rgba(4,10,40,0.22);
 }
 
 .portal-item-title {
@@ -1394,7 +1414,7 @@ body::before {
 .org-approval-card,
 .sprint-card,
 .epic-health-card {
-  border-radius: 18px;
+  border-radius: 22px;
 }
 
 .org-exec-card {
@@ -1559,10 +1579,13 @@ body::before {
 }
 
 .finance-input-card {
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 16px;
+  background:
+    radial-gradient(circle at top right, rgba(255,255,255,0.08), transparent 32%),
+    linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.025));
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 18px;
   padding: 14px 16px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
 }
 
 .finance-input-label {
@@ -2154,9 +2177,11 @@ body::before {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  border: 1px solid rgba(127,179,255,0.28);
+  border: 1px solid rgba(180,214,255,0.3);
   border-radius: 999px;
-  background: rgba(127,179,255,0.08);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.11), rgba(255,255,255,0.04)),
+    rgba(127,179,255,0.08);
   color: #dcecff;
   cursor: pointer;
   font: inherit;
@@ -2181,7 +2206,9 @@ body::before {
 .inline-record-link:hover,
 .record-chip:hover,
 .meta-chip:hover {
-  background: rgba(127,179,255,0.16);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06)),
+    rgba(127,179,255,0.16);
   border-color: rgba(127,179,255,0.45);
   transform: translateY(-1px);
 }
@@ -2218,14 +2245,17 @@ body::before {
   right: 0;
   bottom: 0;
   z-index: 1601;
-  width: min(460px, 100vw);
-  background: linear-gradient(180deg, rgba(11,18,73,0.98), rgba(7,11,46,0.99));
-  border-left: 1px solid rgba(255,255,255,0.08);
-  box-shadow: -12px 0 44px rgba(0,0,0,0.48);
+  width: min(500px, 100vw);
+  background:
+    radial-gradient(circle at top left, rgba(255,255,255,0.12), transparent 32%),
+    linear-gradient(180deg, rgba(11,18,73,0.985), rgba(7,11,46,0.995));
+  border-left: 1px solid rgba(255,255,255,0.12);
+  box-shadow: -18px 0 56px rgba(0,0,0,0.48);
   display: flex;
   flex-direction: column;
   transform: translateX(105%);
   transition: transform 0.26s cubic-bezier(0.4,0,0.2,1);
+  backdrop-filter: blur(26px) saturate(130%);
 }
 
 .record-drawer.open { transform: translateX(0); }
@@ -2288,10 +2318,14 @@ body::before {
 }
 
 .record-summary-item {
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at top right, rgba(255,255,255,0.08), transparent 34%),
+    linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+  border: 1px solid rgba(255,255,255,0.1);
   font-size: 12px;
   line-height: 1.65;
   color: rgba(255,255,255,0.8);
@@ -3470,7 +3504,7 @@ GUARDRAILS:
 OUTPUT_FORMAT: Structured spreadsheets with assumptions clearly labeled`
   },
   A2: {
-    name: "Legal-Compliance",
+    name: "Legal & Compliance",
     subtitle: "Pakistan labor law · Contract drafting · EOBI/SESSI · Regulatory compliance",
     status: "Active", workload: "CRITICAL",
     owner: "You + External Lawyer",
@@ -3531,7 +3565,7 @@ GUARDRAILS:
 OUTPUT_FORMAT: Payroll calculator (Sheets), invoices (PDF), cash flow projections (Sheets), reconciliations`
   },
   A4: {
-    name: "Product-Tech",
+    name: "Product",
     subtitle: "Lovable dev · Forms · Website · ritehirenow.com · Tool integrations",
     status: "Active", workload: "Medium",
     owner: "You (now) + Developer (future)",
@@ -3561,7 +3595,7 @@ GUARDRAILS:
 OUTPUT_FORMAT: Live web pages (Lovable), forms (Google Forms), integrated sheets`
   },
   A5: {
-    name: "Brand-Content",
+    name: "Brand",
     subtitle: "Brand kit · LinkedIn strategy · Copywriting · Visual production · Authority building",
     status: "Active", workload: "High",
     owner: "You + Designer/VA",
@@ -3622,7 +3656,7 @@ GUARDRAILS:
 OUTPUT_FORMAT: CRM updates (Sheets), partner agreements (docs), meeting notes, closed contracts`
   },
   A7: {
-    name: "Customer-Success",
+    name: "Customer Success",
     subtitle: "Client onboarding · Payroll execution · Employee setup · Retention · Support",
     status: "Standby", workload: "Low",
     owner: "You (now) + CS Hire (future)",
@@ -3652,7 +3686,7 @@ GUARDRAILS:
 OUTPUT_FORMAT: Onboarding checklists, payroll records, support tickets, retention reports`
   },
   A8: {
-    name: "Admin-System",
+    name: "Admin & Operations",
     subtitle: "SOP documentation · Process coordination · Quality control · Cross-agent orchestration",
     status: "Active", workload: "Medium",
     owner: "You",
@@ -3726,7 +3760,7 @@ GUARDRAILS:
 OUTPUT_FORMAT: Design systems, asset kits, landing page specs, polished templates, approval-ready creative`
   },
   A10: {
-    name: "Email Outbound",
+    name: "Email Outbound Specialist",
     subtitle: "ICP-led cold email · Sequencing · Reply handling · Meeting conversion",
     status: "Active", workload: "CRITICAL",
     owner: "Specialist + You",
@@ -3756,7 +3790,7 @@ GUARDRAILS:
 OUTPUT_FORMAT: Email sequences, reply matrices, booked meetings, GTM scorecards, learning logs`
   },
   A11: {
-    name: "LinkedIn Outbound",
+    name: "LinkedIn Outbound Specialist",
     subtitle: "Founder/company LinkedIn · Outbound scripts · Profile optimisation · Conversation conversion",
     status: "Active", workload: "High",
     owner: "Specialist + You",
@@ -4237,6 +4271,7 @@ const RECORD_TOKEN_REGEX = /\b(?:DG[1-4]|T(?:[1-9]|1\d|2[0-6])|A(?:[1-9]|1[01])|
 const RECORD_TYPE_ORDER = ["task","agent","epic","sprint","decision_gate","context","guardrail","icp","outreach","department","layer","status","category","priority","progress","workload","blocked"];
 let activeRecordId = null;
 let lastFocusBeforeOverlay = null;
+let activeTaskModalId = null;
 
 function escapeHtml(value = "") {
   return String(value)
@@ -4462,7 +4497,7 @@ function buildRecordIndex() {
     registerRecord({
       id: guardrail.id,
       type: "guardrail",
-      title: guardrail.id,
+      title: shortenDisplayLabel(guardrail.text, 54),
       subtitle: "Operating guardrail",
       description: guardrail.text,
       tab: "epics",
@@ -4474,10 +4509,10 @@ function buildRecordIndex() {
     id: gate.id,
     type: "decision_gate",
     title: gate.name,
-    subtitle: gate.owner,
+    subtitle: formatGateOwnerLabel(gate.owner),
     description: gate.description,
     tab: gate.tab,
-    links: gate.links
+    links: [...gate.links, ...extractKnownTokens(gate.owner)]
   }));
 
   CONTEXT_KEYS.forEach((context) => registerRecord({
@@ -5199,6 +5234,30 @@ function getRecordDisplayLabel(recordOrId, variant = "default") {
   }
 }
 
+function getReadableRecordName(recordId, fallback = "") {
+  const record = getRecord(recordId);
+  if (record) return getRecordDisplayLabel(record, "inline") || record.title || fallback || recordId;
+  const task = getTaskById(recordId);
+  return task?.name || fallback || recordId;
+}
+
+function getReadableTaskNames(recordIds = []) {
+  return uniqueIds(recordIds).map((id) => getTaskById(id)?.name || getReadableRecordName(id, id)).join(", ");
+}
+
+function getReadableRecordNames(recordIds = []) {
+  return uniqueIds(recordIds).map((id) => getReadableRecordName(id, id)).join(", ");
+}
+
+function formatGateOwnerLabel(owner = "") {
+  return String(owner || "")
+    .split("+")
+    .map((value) => value.trim())
+    .filter(Boolean)
+    .map((value) => getReadableRecordName(value, value))
+    .join(" + ");
+}
+
 function getRecordChipHtml(recordId, label) {
   const record = getRecord(recordId);
   if (!record) return "";
@@ -5228,7 +5287,7 @@ function getSortedRecordIds(recordIds) {
     const b = getRecord(right);
     const typeDelta = RECORD_TYPE_ORDER.indexOf(a.type) - RECORD_TYPE_ORDER.indexOf(b.type);
     if (typeDelta !== 0) return typeDelta;
-    return a.id.localeCompare(b.id, undefined, { numeric: true });
+    return getRecordDisplayLabel(a).localeCompare(getRecordDisplayLabel(b), undefined, { numeric: true });
   });
 }
 
@@ -5304,6 +5363,83 @@ function getRecordSummaryMarkup(record) {
   return `<div class="record-summary-list">${items.join("")}</div>`;
 }
 
+function renderTagNarrativeSection(record) {
+  const narratives = [];
+  const recordKind = recordTypeLabel(record.type).toLowerCase();
+
+  if (record.status) {
+    narratives.push({
+      id: statusRecordId(record.status),
+      label: record.status,
+      summary: `This ${recordKind} is currently ${String(record.status).toLowerCase()} in the operating system, so it rolls into the same dashboards, filters, and exception views as other work in the same state.`
+    });
+  }
+
+  if (record.priority) {
+    narratives.push({
+      id: priorityRecordId(record.priority),
+      label: getPriorityLabel(record.priority),
+      summary: `${getPriorityLabel(record.priority)} work is treated as a stronger attention signal for executive review, sequencing, and unblock decisions.`
+    });
+  }
+
+  if (record.category) {
+    narratives.push({
+      id: categoryRecordId(record.category),
+      label: record.category,
+      summary: `This record is grouped under ${record.category}, so it contributes to the same epic and dashboard slice as adjacent work in that business lane.`
+    });
+  }
+
+  if (record.department) {
+    narratives.push({
+      id: departmentRecordId(record.department),
+      label: record.department,
+      summary: `This sits inside ${record.department}, which shapes reporting lines, approvals, and accountability across the org structure.`
+    });
+  }
+
+  if (record.layer) {
+    narratives.push({
+      id: layerRecordId(record.layer),
+      label: record.layer,
+      summary: `This role lives in the ${record.layer.toLowerCase()} layer of the company hierarchy and inherits the visibility and approval expectations of that layer.`
+    });
+  }
+
+  if (record.workload) {
+    narratives.push({
+      id: workloadRecordId(record.workload),
+      label: record.workload,
+      summary: `Workload is currently ${String(record.workload).toLowerCase()}, which should influence prioritization, staffing, and escalation.`
+    });
+  }
+
+  if (typeof record.progress === "number") {
+    narratives.push({
+      id: progressRecordId(record.progress),
+      label: progressRecordLabel(record.progress),
+      summary: `Progress sits at ${record.progress}%, and that level is reused in sprint, epic, finance, and action-portal readouts.`
+    });
+  }
+
+  if (!narratives.length) return "";
+
+  return `
+    <section class="record-section">
+      <div class="record-section-title">Tag Meaning</div>
+      <div class="record-summary-list">
+        ${narratives.map((item) => `
+          <div class="record-summary-item">
+            ${getMetaChipHtml(item.id, item.label)}
+            <span>${escapeHtml(item.summary)}</span>
+          </div>
+        `).join("")}
+      </div>
+    </section>
+  `;
+}
+
 function renderRecordExplorerBody(record, filterText = "") {
   const query = String(filterText || "").trim();
   const taggedIds = uniqueIds([
@@ -5317,6 +5453,7 @@ function renderRecordExplorerBody(record, filterText = "") {
   ]);
   return [
     renderRecordSection("Tagged Categories", taggedIds),
+    renderTagNarrativeSection(record),
     renderRecordSection("Related Records", record.links),
     renderRecordSection("Linked Context", record.links.filter((id) => getRecord(id)?.type === "context")),
     renderRecordSection("Linked Work", record.links.filter((id) => ["task", "epic", "outreach"].includes(getRecord(id)?.type))),
@@ -5414,7 +5551,7 @@ function openRecordExplorer(recordId) {
   summary.innerHTML = getRecordSummaryMarkup(record);
   meta.innerHTML = [
     record.status ? getMetaChipHtml(statusRecordId(record.status), record.status) : "",
-    record.priority ? getMetaChipHtml(priorityRecordId(record.priority), record.priority) : "",
+    record.priority ? getMetaChipHtml(priorityRecordId(record.priority), getPriorityLabel(record.priority)) : "",
     record.category ? getMetaChipHtml(categoryRecordId(record.category), record.category) : "",
     record.workload ? getMetaChipHtml(workloadRecordId(record.workload), record.workload) : "",
     typeof record.progress === "number" ? getMetaChipHtml(progressRecordId(record.progress), progressRecordLabel(record.progress)) : ""
@@ -5536,7 +5673,7 @@ function decorateRecordElements(root = document) {
 }
 
 function linkifyRecordText(root = document) {
-  const containers = root.querySelectorAll("[data-autolink], .blocker-detail, .action-detail, .auth-detail, .oc-meta, .oc-channel, .wc-domain, .stat-sub, .ctr-path, .ctr-meta, .cd-meta, .task-item-id, .task-item-due, .detail-subtitle, .modal-subtitle, .step-detail, .modal-blocker-box, .ref-table td, .gdrive-setup-steps, .gdrive-setup-sub, .obj-text, .icp-pains");
+  const containers = root.querySelectorAll("[data-autolink], .blocker-detail, .action-detail, .auth-detail, .oc-meta, .oc-channel, .wc-domain, .stat-sub, .ctr-path, .ctr-meta, .cd-meta, .task-item-id, .task-item-due, .detail-subtitle, .modal-subtitle, .step-detail, .modal-blocker-box, .ref-table td, .gdrive-setup-steps, .gdrive-setup-sub, .obj-text, .icp-pains, .panel-copy, .metric-sub, .gtm-blocker-copy, .record-summary-item, .sdr-label, .ds-prompt, .finance-input-sub");
   const tokenPattern = /\b(?:DG[1-4]|T(?:[1-9]|1\d|2[0-6])|A(?:[1-9]|1[01])|E[1-8]|G[1-8]|C(?:[1-9]|1\d|2[0-1])|O[1-5]|I[1-4]|P0|P1)\b/;
   containers.forEach((container) => {
     if (container.dataset.linkified === "true") return;
@@ -5749,12 +5886,8 @@ function connectGoogleDrive() {
       renderCriticalTasks();
       // Re-render open modal if any
       const modal = document.getElementById('taskModal');
-      if (modal && modal.classList.contains('open')) {
-        const titleEl = document.getElementById('modalTitle');
-        if (titleEl) {
-          const taskId = titleEl.textContent.split(' · ')[0];
-          openTaskModal(taskId);
-        }
+      if (modal && modal.classList.contains('open') && activeTaskModalId) {
+        openTaskModal(activeTaskModalId);
       }
       showDriveToast('✅', 'Google Drive Connected', 'All "Create it" buttons are now active', null);
     }
@@ -6444,9 +6577,9 @@ function renderCritDrawer() {
             </div>
             <div class="cd-meta">
               ${getAgentLabel(t.agent)} · ${getEpicLabel(t.epic)}
-              ${t.blockedBy.length ? `· <span style="color:rgba(239,83,80,0.8)">⛔ ${t.blockedBy.join(', ')}</span>` : ''}
-              ${t.blocks.length ? `· <span style="color:rgba(76,175,80,0.7)">→ ${t.blocks.join(', ')}</span>` : ''}
-              ${t.resolves ? `· <span style="color:var(--yellow)">Resolves ${t.resolves}</span>` : ''}
+              ${t.blockedBy.length ? `· <span style="color:rgba(239,83,80,0.8)">⛔</span> ${t.blockedBy.map((id) => getRecordChipHtml(id)).join('')}` : ''}
+              ${t.blocks.length ? `· <span style="color:rgba(76,175,80,0.7)">→</span> ${t.blocks.map((id) => getRecordChipHtml(id)).join('')}` : ''}
+              ${t.resolves ? `· <span style="color:var(--yellow)">Resolves</span> ${getRecordChipHtml(t.resolves)}` : ''}
             </div>
             <div class="cd-actions" onclick="event.stopPropagation()">
               <select class="inline-status-select" onchange="updateTaskStatus('${t.id}', this.value);renderCritDrawer()">
@@ -6494,6 +6627,7 @@ function openTaskModal(taskId) {
   const t = TASKS.find(t => t.id === taskId);
   const res = RESOLUTION[taskId];
   if (!t || !res) return;
+  activeTaskModalId = taskId;
   rememberOverlayFocus();
 
   const isBlocked = t.blockedBy.length > 0;
@@ -6532,7 +6666,7 @@ function openTaskModal(taskId) {
       <div>
         <div style="font-size:13px;font-weight:600;margin-bottom:3px">${GDRIVE_DOCS[t.id].icon} ${GDRIVE_DOCS[t.id].title}</div>
         <div class="sdr-label">${GDRIVE_DOCS[t.id].description}</div>
-        ${GDRIVE_DOCS[t.id].usedIn.length ? `<div class="sdr-label" style="margin-top:4px;color:rgba(76,175,80,0.7)">📤 Created doc accessible in: ${GDRIVE_DOCS[t.id].usedIn.join(', ')}</div>` : ''}
+        ${GDRIVE_DOCS[t.id].usedIn.length ? `<div class="sdr-label" style="margin-top:4px;color:rgba(76,175,80,0.7)">📤 Created doc accessible in:<div class="record-chip-row" style="margin-top:6px">${GDRIVE_DOCS[t.id].usedIn.map((id) => getRecordChipHtml(id)).join('')}</div></div>` : ''}
       </div>
       <div class="sdr-actions">
         ${getCreateDriveBtnHtml(t.id)}
@@ -6580,6 +6714,7 @@ function closeTaskModal(e) {
     const modal = document.getElementById('taskModal');
     modal.classList.remove('open');
     modal.setAttribute('aria-hidden', 'true');
+    activeTaskModalId = null;
     syncOverlayState();
     restoreOverlayFocus();
   }
@@ -6674,7 +6809,7 @@ function renderDecisionGateBar() {
     return `
       <button type="button" class="ref-chip chip-dg" style="display:grid;gap:4px;padding:10px 14px;text-align:left;min-width:220px" data-record-id="${escapeHtml(gate.id)}">
         <span style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.92)">${escapeHtml(gate.name)}</span>
-        <span style="font-size:10px;color:rgba(255,255,255,0.56)">${blockedCount ? `${blockedCount} blocked dependencies` : `${openCount} live dependencies`} · ${escapeHtml(gate.owner)}</span>
+        <span style="font-size:10px;color:rgba(255,255,255,0.56)">${blockedCount ? `${blockedCount} blocked dependencies` : `${openCount} live dependencies`} · ${escapeHtml(formatGateOwnerLabel(gate.owner) || gate.owner)}</span>
       </button>
     `;
   }).join('');
@@ -7678,8 +7813,9 @@ function renderGtmDashboard() {
                 ${getMetaChipHtml(priorityRecordId(task.priority), getPriorityLabel(task.priority))}
               </div>
               <div class="gtm-blocker-copy">
-                ${escapeHtml(getAgentLabel(task.agent))} · ${escapeHtml(getEpicLabel(task.epic))}${task.blockedBy.length ? ` · Blocked by ${escapeHtml(task.blockedBy.join(', '))}` : ''}
-                ${task.blocks.length ? ` · Unlocks ${escapeHtml(task.blocks.join(', '))}` : ''}
+                ${escapeHtml(getAgentLabel(task.agent))} · ${escapeHtml(getEpicLabel(task.epic))}
+                ${task.blockedBy.length ? `<div class="record-chip-row" style="margin-top:8px">${task.blockedBy.map((id) => getRecordChipHtml(id)).join('')}</div>` : ''}
+                ${task.blocks.length ? `<div class="record-chip-row" style="margin-top:8px">${task.blocks.map((id) => getRecordChipHtml(id)).join('')}</div>` : ''}
               </div>
             </div>
           `).join('') : '<div class="record-summary">No GTM blockers currently active.</div>'}
@@ -7764,9 +7900,9 @@ function renderTasksTable() {
   const title = document.getElementById('tasksSectionTitle');
   if (title) title.textContent = `All Tasks (${TASKS.length})`;
   tbody.innerHTML = TASKS.map(t => {
-    const resolvesNote = t.resolves ? `<br><span style="font-size:10px;color:var(--yellow)">▶ Resolves ${t.resolves}</span>` : '';
+    const resolvesNote = t.resolves ? `<div style="font-size:10px;color:var(--yellow);margin-top:6px">▶ Resolves ${getRecordChipHtml(t.resolves)}</div>` : '';
     const partialNote = t.partialNote ? `<br><span style="font-size:10px;color:var(--orange)">${t.partialNote}</span>` : '';
-    const informsNote = t.informs?.length ? `<br><span style="font-size:10px;color:rgba(255,255,255,0.35)">ℹ Informs: ${t.informs.join(', ')}</span>` : '';
+    const informsNote = t.informs?.length ? `<div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:6px">ℹ Informs: ${t.informs.map((id) => getRecordChipHtml(id)).join(' ')}</div>` : '';
     const doneStyle = t.status === 'Complete' ? 'opacity:0.5;' : '';
     return `
       <tr style="cursor:pointer;${doneStyle}">
