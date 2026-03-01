@@ -60,3 +60,9 @@ This file is the governing project spec for the RiteHire Agentic OS.
   - GTM
   - finance
   - hierarchy and agent operating views
+
+## AI Runtime Preference
+
+- Wherever a configurable reasoning/default model exists in the surrounding tooling, prefer Moonshot Kimi first.
+- Anthropic-compatible integrations should target Moonshot using the Anthropic-compatible base URL, with Kimi selected as the default model whenever the client supports explicit model choice.
+- Fallbacks should only be used when a given surface does not support Moonshot/Kimi or when a task requires a provider-specific capability not available through Kimi.
