@@ -14,7 +14,7 @@ That single instruction gives Claude full context. No re-explaining. No separate
 
 ---
 
-## Last updated: 2026-03-02
+## Last updated: 2026-03-02 (session 3)
 
 Sessions captured in this file:
 - "Getting to know you" (Cowork session, ~2026-02-07 to 2026-03-01)
@@ -184,8 +184,9 @@ URL: https://www.notion.so/31714d73bdee8138ad6aca1ebcec4509
 - [x] Daily report schedule running (3× daily)
 - [x] Old Notion content archived
 - [x] CONTEXT.md written (this file)
-- [ ] **NEXT → GitHub repo:** new clean repo, full folder structure, all 9 agent YAMLs, all 8 SKILL.md files, system prompts, PERSONALIZATION_SPEC.md, schema.sql
-- [ ] Supabase: project created, schema applied, 7 tables live
+- [x] **GitHub repo structure complete** — 9 agent YAMLs, 8 SKILL.md files, 9 system prompts, schema.sql, README.md all written locally. Run `git add . && git commit -m "feat: initial repo" && git push` from ~/Documents/YES/ritehire-agentic-os to push to GitHub.
+- [x] Notion UserGuide created — https://www.notion.so/31714d73bdee814db1fdc7e4994fd2ae
+- [ ] **NEXT → Supabase:** create project, run /database/schema.sql, verify 7 tables + seed data
 - [ ] Notion: 7 databases created (mirroring Supabase tables), bidirectional sync configured
 - [ ] Google Drive: /RiteHire OS/ folder + 4 subfolders created
 - [ ] Lovable: new project scaffolded, connected to Supabase, 6 views built
