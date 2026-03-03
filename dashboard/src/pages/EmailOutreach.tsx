@@ -14,9 +14,9 @@ export default function EmailOutreach() {
     })
     const [selectedEmail, setSelectedEmail] = useState<ActivityLogEntry | null>(null)
 
-    const drafts = entries.filter((e) => e.status === 'approved_pending_action').length
-    const pendingApproval = entries.filter((e) => e.status === 'awaiting_approval').length
-    const sent = entries.filter((e) => e.status === 'completed').length
+    const drafts = entries.filter((e) => e.status === 'in_progress').length
+    const pendingApproval = entries.filter((e) => e.status === 'pending').length
+    const sent = entries.filter((e) => e.status === 'success').length
     const replied = 0 // Would come from contacts outreach_status
     const meetings = 0
 
@@ -78,7 +78,7 @@ export default function EmailOutreach() {
                             >
                                 <div className="min-w-0">
                                     <p className="text-sm font-medium text-navy truncate">{entry.output_summary}</p>
-                                    <p className="text-xs text-charcoal mt-0.5">{entry.action_type.replace(/_/g, ' ')}</p>
+                                    <p className="text-xs text-charcoal mt-0.5">{(entry.skill_used ?? entry.action_type ?? 'action').replace(/_/g, ' ')}</p>
                                 </div>
                                 <span className="text-xs text-charcoal">{entry.skill_used || entry.agent_id}</span>
                                 <StatusBadge status={entry.status} size="sm" />

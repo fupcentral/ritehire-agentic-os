@@ -103,7 +103,7 @@ export default function Finance() {
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm text-navy truncate">{entry.output_summary}</p>
                                     <p className="text-xs text-charcoal mt-0.5">
-                                        {entry.action_type.replace(/_/g, ' ')} · {new Date(entry.created_at).toLocaleDateString()}
+                                        {(entry.skill_used ?? entry.action_type ?? 'action').replace(/_/g, ' ')} · {new Date(entry.created_at).toLocaleDateString()}
                                     </p>
                                 </div>
                                 <StatusBadge status={entry.status} size="sm" />

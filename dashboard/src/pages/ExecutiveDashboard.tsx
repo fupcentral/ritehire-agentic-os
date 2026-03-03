@@ -14,11 +14,11 @@ import {
 } from 'lucide-react'
 
 const STAGE_LABELS: Record<string, string> = {
-    prospect: 'Prospect',
-    qualified: 'Qualified',
-    proposal_sent: 'Proposal',
+    prospecting: 'Prospecting',
+    contacted: 'Contacted',
+    discovery: 'Discovery',
+    proposal: 'Proposal',
     negotiation: 'Negotiation',
-    verbal_close: 'Verbal Close',
     closed_won: 'Won',
     closed_lost: 'Lost',
 }
@@ -29,22 +29,28 @@ export default function ExecutiveDashboard() {
     const { entries: recentActivity, loading: activityLoading } = useActivityLog({ limit: 10 })
     const { tasks, loading: tasksLoading } = useTasks()
 
+    // Agent name lookup map — defined first so allAlerts can reference it
+    const agentNameMap = agents.reduce<Record<string, string>>((acc, a) => {
+        acc[a.id] = a.name
+        return acc
+    }, {})
+
     const criticalAlerts = tasks.filter(
-        (t) => t.priority === 'critical' || t.status === 'blocked'
+        (t) => t.priority === 'P0 - Critical' || t.status === 'blocked'
     )
-    const escalated = recentActivity.filter((a) => a.status === 'escalated')
+    const escalated = recentActivity.filter((a) => a.status === 'failed')
     const allAlerts = [
         ...criticalAlerts.map((t) => ({
             id: t.id,
             text: t.title,
             type: t.status === 'blocked' ? 'blocked' : 'critical',
-            agent: t.agent_id,
+            agent: t.agent?.name ?? agentNameMap[t.agent_id ?? ''] ?? t.agent_id ?? '—',
         })),
         ...escalated.map((a) => ({
             id: a.id,
             text: a.output_summary,
-            type: 'escalated',
-            agent: a.agent_id,
+            type: 'failed',
+            agent: a.agent?.name ?? agentNameMap[a.agent_id ?? ''] ?? a.agent_id ?? '—',
         })),
     ]
 
@@ -225,13 +231,13 @@ export default function ExecutiveDashboard() {
                             <div key={entry.id} className="flex items-center gap-4 py-3">
                                 <div className="w-8 h-8 rounded-full bg-navy/5 flex items-center justify-center flex-shrink-0">
                                     <span className="text-[10px] font-bold text-navy uppercase">
-                                        {entry.agent_id.slice(0, 2)}
+                                        {(agentNameMap[entry.agent_id ?? ''] ?? entry.agent_id ?? '??').slice(0, 2)}
                                     </span>
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm text-navy truncate">{entry.output_summary}</p>
                                     <p className="text-xs text-charcoal mt-0.5">
-                                        {entry.agent_id} · {entry.action_type.replace(/_/g, ' ')}
+                                        {agentNameMap[entry.agent_id ?? ''] ?? entry.agent_id ?? '—'} · {(entry.skill_used ?? entry.action_type ?? 'action').replace(/_/g, ' ')}
                                     </p>
                                 </div>
                                 <StatusBadge status={entry.status} size="sm" />

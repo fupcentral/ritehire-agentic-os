@@ -7,11 +7,11 @@ import { Kanban, Plus, DollarSign, TrendingUp, BarChart3 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 const STAGES = [
-    { key: 'prospect', label: 'Prospect', color: 'bg-charcoal' },
-    { key: 'qualified', label: 'Qualified', color: 'bg-blue-500' },
-    { key: 'proposal_sent', label: 'Proposal Sent', color: 'bg-amber-500' },
+    { key: 'prospecting', label: 'Prospecting', color: 'bg-charcoal' },
+    { key: 'contacted', label: 'Contacted', color: 'bg-blue-500' },
+    { key: 'discovery', label: 'Discovery', color: 'bg-indigo-500' },
+    { key: 'proposal', label: 'Proposal', color: 'bg-amber-500' },
     { key: 'negotiation', label: 'Negotiation', color: 'bg-orange-500' },
-    { key: 'verbal_close', label: 'Verbal Close', color: 'bg-purple-500' },
     { key: 'closed_won', label: 'Closed Won', color: 'bg-teal' },
     { key: 'closed_lost', label: 'Closed Lost', color: 'bg-red-500' },
 ]
@@ -21,7 +21,7 @@ export default function Pipeline() {
     const [showAddModal, setShowAddModal] = useState(false)
     const [formData, setFormData] = useState({
         company: '',
-        stage: 'prospect',
+        stage: 'prospecting',
         mrr: '',
         expected_close_date: '',
         source: '',

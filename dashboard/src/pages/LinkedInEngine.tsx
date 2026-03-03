@@ -36,8 +36,8 @@ export default function LinkedInEngine() {
 
     // Stats
     const totalPosts = entries.length
-    const pendingReview = entries.filter((e) => e.status === 'awaiting_approval').length
-    const approved = entries.filter((e) => e.status === 'completed').length
+    const pendingReview = entries.filter((e) => e.status === 'pending').length
+    const approved = entries.filter((e) => e.status === 'success').length
     const needsRevision = entries.filter((e) => e.status === 'failed').length
 
     const stats = [
@@ -133,7 +133,7 @@ export default function LinkedInEngine() {
                                     <p className="text-sm font-medium text-navy truncate">{entry.output_summary}</p>
                                     <p className="text-xs text-charcoal mt-0.5">{entry.skill_used || 'manual'}</p>
                                 </div>
-                                <span className="text-xs text-charcoal capitalize">{entry.action_type.replace(/_/g, ' ')}</span>
+                                <span className="text-xs text-charcoal capitalize">{(entry.skill_used ?? entry.action_type ?? 'action').replace(/_/g, ' ')}</span>
                                 <StatusBadge status={entry.risk_level || 'low'} size="sm" />
                                 <StatusBadge status={entry.status} size="sm" />
                             </div>
@@ -179,8 +179,8 @@ export default function LinkedInEngine() {
                                 <p className="text-sm font-medium text-navy mt-0.5">{selectedPost.skill_used || '—'}</p>
                             </div>
                             <div>
-                                <span className="text-xs text-charcoal">Action Type</span>
-                                <p className="text-sm font-medium text-navy mt-0.5 capitalize">{selectedPost.action_type.replace(/_/g, ' ')}</p>
+                                <span className="text-xs text-charcoal">Skill / Action</span>
+                                <p className="text-sm font-medium text-navy mt-0.5 capitalize">{(selectedPost.skill_used ?? selectedPost.action_type ?? 'action').replace(/_/g, ' ')}</p>
                             </div>
                             <div>
                                 <span className="text-xs text-charcoal">Created</span>

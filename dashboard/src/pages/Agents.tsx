@@ -95,7 +95,7 @@ export default function Agents() {
                                     <div className="flex flex-wrap gap-1.5 mb-3">
                                         {agent.skills.map((skill) => (
                                             <span
-                                                key={skill.skill_id}
+                                                key={skill.id}
                                                 className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-teal/10 text-teal border border-teal/20"
                                             >
                                                 <Zap size={10} /> {skill.name}
@@ -149,7 +149,7 @@ export default function Agents() {
                                 <h4 className="text-sm font-semibold text-navy mb-2">Skills</h4>
                                 <div className="space-y-2">
                                     {selectedAgent.skills.map((skill) => (
-                                        <div key={skill.skill_id} className="flex items-center justify-between p-3 bg-surface rounded-lg">
+                                        <div key={skill.id} className="flex items-center justify-between p-3 bg-surface rounded-lg">
                                             <div className="flex items-center gap-2">
                                                 <Zap size={14} className="text-teal" />
                                                 <span className="text-sm font-medium text-navy">{skill.name}</span>
@@ -199,7 +199,7 @@ export default function Agents() {
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-sm text-navy truncate">{entry.output_summary}</p>
                                                 <p className="text-xs text-charcoal mt-0.5">
-                                                    {entry.action_type.replace(/_/g, ' ')} · {new Date(entry.created_at).toLocaleDateString()}
+                                                    {(entry.skill_used ?? entry.action_type ?? 'action').replace(/_/g, ' ')} · {new Date(entry.created_at).toLocaleDateString()}
                                                 </p>
                                             </div>
                                             <StatusBadge status={entry.status} size="sm" />

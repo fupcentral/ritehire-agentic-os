@@ -7,7 +7,7 @@ import EmptyState from '../components/ui/EmptyState'
 import { Activity, ChevronLeft, ChevronRight } from 'lucide-react'
 
 const ACTION_TYPES = ['all', 'skill_execution', 'decision', 'alert', 'review']
-const STATUSES = ['all', 'completed', 'approved_pending_action', 'awaiting_approval', 'failed', 'escalated']
+const STATUSES = ['all', 'success', 'failed', 'in_progress', 'pending']
 const RISKS = ['all', 'low', 'medium', 'high', 'critical']
 
 export default function ActivityLog() {
@@ -132,11 +132,17 @@ export default function ActivityLog() {
                                 </span>
                                 <div className="flex items-center gap-2">
                                     <div className="w-6 h-6 rounded-md bg-navy/5 flex items-center justify-center flex-shrink-0">
-                                        <span className="text-[9px] font-bold text-navy uppercase">{entry.agent_id.slice(0, 2)}</span>
+                                        <span className="text-[9px] font-bold text-navy uppercase">
+                                            {(entry.agent?.name ?? entry.agent_id ?? '?').slice(0, 2)}
+                                        </span>
                                     </div>
-                                    <span className="text-xs text-navy font-medium truncate">{entry.agent_id}</span>
+                                    <span className="text-xs text-navy font-medium truncate">
+                                        {entry.agent?.name ?? entry.agent_id ?? '—'}
+                                    </span>
                                 </div>
-                                <span className="text-xs text-charcoal capitalize">{entry.action_type.replace(/_/g, ' ')}</span>
+                                <span className="text-xs text-charcoal capitalize">
+                                    {(entry.skill_used ?? entry.action_type ?? 'action').replace(/_/g, ' ')}
+                                </span>
                                 <p className="text-sm text-navy truncate">{entry.output_summary}</p>
                                 <StatusBadge status={entry.status} size="sm" />
                                 {entry.risk_level ? (

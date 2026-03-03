@@ -10,8 +10,7 @@ import type { Contact } from '../lib/types'
 import { supabase } from '../lib/supabase'
 
 const STATUS_OPTIONS = [
-    'all', 'identified', 'draft', 'approved', 'sent', 'replied',
-    'meeting_booked', 'client', 'no_response', 'not_interested', 'do_not_contact',
+    'all', 'not_contacted', 'contacted', 'replied', 'meeting_booked', 'disqualified',
 ]
 
 export default function Contacts() {
