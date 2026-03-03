@@ -4,6 +4,7 @@ import type { ActivityLogEntry } from '../lib/types'
 
 interface UseActivityLogOptions {
     agentId?: string | string[]
+    agentName?: string | string[]
     status?: string
     limit?: number
 }
@@ -13,13 +14,14 @@ export function useActivityLog(options: UseActivityLogOptions = {}) {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
+    const agentIdKey =
+        typeof options.agentId === 'string' ? options.agentId : options.agentId?.join(',')
+    const agentNameKey =
+        typeof options.agentName === 'string' ? options.agentName : options.agentName?.join(',')
+
     useEffect(() => {
         fetchEntries()
-    }, [
-        typeof options.agentId === 'string' ? options.agentId : options.agentId?.join(','),
-        options.status,
-        options.limit,
-    ])
+    }, [agentIdKey, agentNameKey, options.status, options.limit])
 
     async function fetchEntries() {
         setLoading(true)
@@ -43,7 +45,21 @@ export function useActivityLog(options: UseActivityLogOptions = {}) {
             const { data, error: err } = await query
 
             if (err) throw err
-            setEntries((data as ActivityLogEntry[]) || [])
+
+            let results = (data as ActivityLogEntry[]) || []
+
+            // Client-side filter by agent name if specified
+            // (handles UUID agent_ids where we only know agent name)
+            if (options.agentName) {
+                const names = Array.isArray(options.agentName)
+                    ? options.agentName.map((n) => n.toLowerCase())
+                    : [options.agentName.toLowerCase()]
+                results = results.filter(
+                    (e) => e.agent && names.some((n) => e.agent!.name.toLowerCase().includes(n))
+                )
+            }
+
+            setEntries(results)
         } catch (e: any) {
             setError(e.message || 'Failed to fetch activity log')
             console.error('[useActivityLog]', e)

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import TabNav from '../components/ui/TabNav'
-import Card, { CardHeader } from '../components/ui/Card'
+import Card from '../components/ui/Card'
 import StatusBadge from '../components/ui/StatusBadge'
 import StatCard from '../components/ui/StatCard'
 import SkeletonLoader from '../components/ui/SkeletonLoader'
@@ -445,7 +445,7 @@ function ContactsTab() {
    ============================================================ */
 function OutreachTab() {
     const { entries, loading } = useActivityLog({
-        agentId: ['email-outbound', 'linkedin-outbound'],
+        agentName: ['Email Outbound', 'LinkedIn Outbound'],
         limit: 50,
     })
     const [selectedEntry, setSelectedEntry] = useState<any>(null)

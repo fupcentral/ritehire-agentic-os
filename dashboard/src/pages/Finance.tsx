@@ -17,7 +17,7 @@ import {
 export default function Finance() {
     const { deals, loading: dealsLoading } = useDeals()
     const { entries: cfoActivity, loading: activityLoading } = useActivityLog({
-        agentId: ['cfo', 'admin-ops'],
+        agentName: ['CFO', 'Admin'],
         limit: 20,
     })
 

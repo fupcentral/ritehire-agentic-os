@@ -25,10 +25,12 @@ interface CardHeaderProps {
 
 export function CardHeader({ title, subtitle, action, className = '' }: CardHeaderProps) {
     return (
-        <div className={`flex items-center justify-between mb-4 ${className}`}>
+        <div className={`flex items-center justify-between mb-5 ${className}`}>
             <div>
-                <h3 className="text-base font-semibold text-navy">{title}</h3>
-                {subtitle && <p className="text-xs text-charcoal mt-0.5">{subtitle}</p>}
+                <h3 className="text-[15px] font-semibold text-navy tracking-tight">{title}</h3>
+                {subtitle && (
+                    <p className="text-[11px] text-charcoal/50 mt-0.5 font-medium">{subtitle}</p>
+                )}
             </div>
             {action}
         </div>

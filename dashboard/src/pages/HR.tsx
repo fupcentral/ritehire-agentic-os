@@ -24,7 +24,7 @@ const statusDotClass: Record<string, string> = {
 export default function HR() {
     const { agents, loading: agentsLoading } = useAgents()
     const { entries: legalActivity, loading: activityLoading } = useActivityLog({
-        agentId: 'legal-compliance',
+        agentName: 'Legal',
         limit: 20,
     })
 

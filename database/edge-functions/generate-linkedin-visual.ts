@@ -3,153 +3,192 @@
  * ─────────────────────────────────────────────────────────────────────────────
  * Supabase Edge Function — RiteHire Agentic OS
  *
- * Receives a visual brief from the linkedin-draft-post skill, calls fal.ai
- * Flux Pro to generate a brand-locked LinkedIn image, uploads to Google Drive
- * /Deliverables/, and returns the Drive file URL for review in Lovable.
+ * Receives a visual brief from the linkedin-image-brief skill, calls Google's
+ * Nano Banana Pro (Gemini 3 Pro Image) to generate a brand-locked LinkedIn
+ * image, uploads to Google Drive /Deliverables/, and returns the Drive file URL
+ * for review in the dashboard.
  *
  * Endpoint: POST /functions/v1/generate-linkedin-visual
- * Auth:     Supabase JWT (anon key from Lovable frontend)
+ * Auth:     Supabase JWT (anon key from dashboard frontend)
  *
  * Environment variables (stored in Supabase vault):
- *   FAL_API_KEY            — fal.ai API key
+ *   GEMINI_API_KEY         — Google AI Studio API key (aistudio.google.com)
  *   GOOGLE_DRIVE_FOLDER_ID — /Deliverables/ folder ID in Google Drive
  *   GOOGLE_SERVICE_ACCOUNT — JSON string of GCP service account credentials
+ *
+ * Model: Nano Banana Pro (gemini-3-pro-image-preview)
+ * Fallback: Nano Banana 2 (gemini-3.1-flash-image-preview) — faster, lower cost
  */
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+// Nano Banana Pro — highest quality, best for brand-accurate visuals
+const NANO_BANANA_PRO_MODEL = "gemini-3-pro-image-preview";
+// Nano Banana 2 — faster + cheaper, use as fallback or for iteration
+const NANO_BANANA_2_MODEL = "gemini-3.1-flash-image-preview";
+
+const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface VisualBrief {
-  post_id: string;          // e.g. "Wk1-Post1"
-  visual_type: string;      // "single image" | "carousel"
-  visual_concept: string;   // 1-sentence description
+  post_id: string;           // e.g. "Wk1-Post1"
+  visual_type: string;       // "single image" | "carousel"
+  visual_concept: string;    // 1-sentence description
   on_image_copy: {
     headline: string;
-    bullets: string[];      // max 3
-    footer: string;         // always "RiteHire — Pakistan EOR/Payroll/Compliance"
+    bullets: string[];       // max 3
+    footer: string;          // always "RiteHire — Pakistan EOR/Payroll/Compliance"
   };
-  generation_prompt: string; // full brand-locked prompt from Section 10 template
+  generation_prompt: string; // full brand-locked prompt from linkedin-image-brief skill
   export_specs: {
     width: number;           // 1200 for single, 1080 for carousel
     height: number;          // 1200 for single, 1350 for carousel
     margins: number;         // always 80
   };
+  model?: "pro" | "flash";   // optional: "pro" = Nano Banana Pro, "flash" = Nano Banana 2
 }
 
 interface GenerateResponse {
   success: boolean;
   post_id: string;
-  image_url: string;        // fal.ai CDN URL (temporary)
-  drive_url?: string;       // Google Drive permanent URL
+  image_url: string;         // Drive CDN URL (permanent)
+  drive_url?: string;        // Google Drive webViewLink
   drive_file_id?: string;
+  model_used?: string;
   error?: string;
 }
 
-// ─── Flux Pro Configuration ───────────────────────────────────────────────────
+interface GeminiImagePart {
+  inline_data?: {
+    mime_type: string;
+    data: string;            // base64-encoded image bytes
+  };
+  text?: string;
+}
 
-const FAL_API_BASE = "https://queue.fal.run/fal-ai/flux-pro";
+// ─── Nano Banana Pro: Image Generation ───────────────────────────────────────
 
 /**
- * Builds the Flux Pro payload from a visual brief.
- * Enforces brand constraints at the API layer — not just the prompt.
+ * Maps visual brief dimensions to Gemini aspectRatio parameter.
+ * Gemini accepts: "1:1" | "3:4" | "4:3" | "9:16" | "16:9" | "4:5" | "5:4"
  */
-function buildFluxPayload(brief: VisualBrief) {
-  // Derive pixel size for fal.ai image_size param
+function getAspectRatio(brief: VisualBrief): string {
   const isCarousel = brief.visual_type.toLowerCase().includes("carousel");
-  const imageSize = isCarousel ? "portrait_4_3" : "square_hd";
+  // 1080×1350 carousel ≈ 4:5; 1200×1200 single = 1:1
+  return isCarousel ? "4:5" : "1:1";
+}
+
+/**
+ * Calls Nano Banana Pro (or Nano Banana 2 fallback) to generate a brand-locked
+ * LinkedIn visual. Returns raw base64 image data.
+ */
+async function generateWithNanoBanana(
+  brief: VisualBrief,
+  apiKey: string
+): Promise<{ base64Data: string; mimeType: string; modelUsed: string }> {
+  const useFlash = brief.model === "flash";
+  const model = useFlash ? NANO_BANANA_2_MODEL : NANO_BANANA_PRO_MODEL;
+  const endpoint = `${GEMINI_API_BASE}/${model}:generateContent`;
+  const aspectRatio = getAspectRatio(brief);
+
+  const requestBody = {
+    contents: [
+      {
+        parts: [
+          {
+            text: brief.generation_prompt,
+          },
+        ],
+      },
+    ],
+    generationConfig: {
+      responseModalities: ["IMAGE"],
+      imageConfig: {
+        aspectRatio,
+      },
+    },
+  };
+
+  console.log(
+    `[generate-linkedin-visual] Calling ${model} (${aspectRatio}) for post ${brief.post_id}`
+  );
+
+  const response = await fetch(`${endpoint}?key=${apiKey}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-goog-api-key": apiKey,
+    },
+    body: JSON.stringify(requestBody),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+
+    // If Pro model fails (e.g., quota), auto-retry with Nano Banana 2
+    if (!useFlash && (response.status === 429 || response.status === 503)) {
+      console.warn(
+        `[generate-linkedin-visual] Nano Banana Pro quota/unavailable — retrying with Nano Banana 2`
+      );
+      return generateWithNanaBanana({ ...brief, model: "flash" }, apiKey);
+    }
+
+    throw new Error(`Nano Banana API error (${response.status}): ${errText}`);
+  }
+
+  const data = await response.json();
+
+  // Extract image part from response candidates
+  const candidates = data.candidates ?? [];
+  if (candidates.length === 0) {
+    throw new Error(
+      `Nano Banana returned no candidates. Finish reason: ${data.promptFeedback?.blockReason ?? "unknown"}`
+    );
+  }
+
+  const parts: GeminiImagePart[] = candidates[0]?.content?.parts ?? [];
+  const imagePart = parts.find((p) => p.inline_data?.mime_type?.startsWith("image/"));
+
+  if (!imagePart?.inline_data) {
+    // Log what we actually got back to help debug
+    const textParts = parts.filter((p) => p.text).map((p) => p.text);
+    throw new Error(
+      `Nano Banana returned no image data. Text response: "${textParts.join(" ")}"`
+    );
+  }
 
   return {
-    prompt: brief.generation_prompt,
-    image_size: imageSize,
-    num_inference_steps: 28,
-    guidance_scale: 3.5,
-    num_images: 1,
-    enable_safety_checker: false,
-    output_format: "png",
+    base64Data: imagePart.inline_data.data,
+    mimeType: imagePart.inline_data.mime_type,
+    modelUsed: model,
   };
 }
 
-// ─── fal.ai Queue Helpers ─────────────────────────────────────────────────────
-
-async function submitToFlux(
-  payload: ReturnType<typeof buildFluxPayload>,
-  falApiKey: string
-): Promise<string> {
-  // Submit request to queue
-  const submitRes = await fetch(FAL_API_BASE, {
-    method: "POST",
-    headers: {
-      "Authorization": `Key ${falApiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-
-  if (!submitRes.ok) {
-    const err = await submitRes.text();
-    throw new Error(`fal.ai submit failed (${submitRes.status}): ${err}`);
-  }
-
-  const submitData = await submitRes.json();
-  const requestId: string = submitData.request_id;
-  const statusUrl: string = submitData.response_url ?? `${FAL_API_BASE}/requests/${requestId}`;
-
-  // Poll until complete (max 90s, 3s intervals)
-  const maxAttempts = 30;
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    await new Promise((r) => setTimeout(r, 3000));
-
-    const pollRes = await fetch(statusUrl, {
-      headers: { "Authorization": `Key ${falApiKey}` },
-    });
-
-    if (!pollRes.ok) continue;
-
-    const pollData = await pollRes.json();
-
-    if (pollData.status === "COMPLETED" || pollData.images) {
-      const images: Array<{ url: string }> = pollData.images ?? pollData.output?.images;
-      if (!images || images.length === 0) {
-        throw new Error("Flux returned no images");
-      }
-      return images[0].url;
-    }
-
-    if (pollData.status === "FAILED") {
-      throw new Error(`Flux generation failed: ${JSON.stringify(pollData)}`);
-    }
-  }
-
-  throw new Error("Flux generation timed out after 90s");
-}
+// Alias for recursive retry call (avoids TypeScript "used before defined" issue)
+const generateWithNanaBanana = generateWithNanoBanana;
 
 // ─── Google Drive Upload ──────────────────────────────────────────────────────
 
 async function uploadToDrive(
-  imageUrl: string,
+  imageBytes: Uint8Array,
+  mimeType: string,
   filename: string,
   folderId: string,
   serviceAccountJson: string
 ): Promise<{ fileId: string; webViewLink: string }> {
-  // Fetch generated image bytes
-  const imgRes = await fetch(imageUrl);
-  if (!imgRes.ok) throw new Error("Failed to fetch generated image from fal.ai CDN");
-  const imageBytes = await imgRes.arrayBuffer();
-
-  // Parse service account credentials
   const credentials = JSON.parse(serviceAccountJson);
 
-  // Get OAuth2 token via service account JWT
   const accessToken = await getServiceAccountToken(credentials, [
     "https://www.googleapis.com/auth/drive.file",
   ]);
 
-  // Upload to Drive using multipart upload
   const metadata = {
     name: filename,
     parents: [folderId],
-    mimeType: "image/png",
+    mimeType,
   };
 
   const boundary = "boundary_ritehire_linkedin_visual";
@@ -160,15 +199,15 @@ async function uploadToDrive(
     `Content-Type: application/json; charset=UTF-8\r\n\r\n` +
     JSON.stringify(metadata);
 
-  const imagePart = `Content-Type: image/png\r\n\r\n`;
+  const imagePart = `Content-Type: ${mimeType}\r\n\r\n`;
 
-  // Build multipart body
   const encoder = new TextEncoder();
   const parts = [
     encoder.encode(delimiter + metadataPart + delimiter + imagePart),
-    new Uint8Array(imageBytes),
+    imageBytes,
     encoder.encode(closeDelimiter),
   ];
+
   const totalLength = parts.reduce((sum, p) => sum + p.byteLength, 0);
   const body = new Uint8Array(totalLength);
   let offset = 0;
@@ -225,7 +264,6 @@ async function getServiceAccountToken(
 
   const signingInput = `${header}.${claim}`;
 
-  // Import RSA private key
   const pemContents = credentials.private_key
     .replace(/-----BEGIN PRIVATE KEY-----/, "")
     .replace(/-----END PRIVATE KEY-----/, "")
@@ -249,7 +287,6 @@ async function getServiceAccountToken(
   const signature = btoa(String.fromCharCode(...new Uint8Array(sigBytes)));
   const jwt = `${signingInput}.${signature}`;
 
-  // Exchange JWT for access token
   const tokenRes = await fetch(tokenUri, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -276,7 +313,8 @@ Deno.serve(async (req: Request) => {
     return new Response(null, {
       headers: {
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+        "Access-Control-Allow-Headers":
+          "authorization, x-client-info, apikey, content-type",
       },
     });
   }
@@ -298,42 +336,52 @@ Deno.serve(async (req: Request) => {
     });
   }
 
-  // Validate required fields
   if (!brief.post_id || !brief.generation_prompt) {
     return new Response(
-      JSON.stringify({ error: "Missing required fields: post_id, generation_prompt" }),
+      JSON.stringify({
+        error: "Missing required fields: post_id, generation_prompt",
+      }),
       { status: 400, headers: { "Content-Type": "application/json" } }
     );
   }
 
-  // Load secrets from Deno env (Supabase vault)
-  const falApiKey = Deno.env.get("FAL_API_KEY");
+  // Load secrets from Supabase vault
+  const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
   const driveFolderId = Deno.env.get("GOOGLE_DRIVE_FOLDER_ID");
   const serviceAccountJson = Deno.env.get("GOOGLE_SERVICE_ACCOUNT");
 
-  if (!falApiKey) {
+  if (!geminiApiKey) {
     return new Response(
-      JSON.stringify({ error: "FAL_API_KEY not configured in Supabase vault" }),
+      JSON.stringify({
+        error:
+          "GEMINI_API_KEY not configured. Get your key at aistudio.google.com, then run: supabase secrets set GEMINI_API_KEY=<your-key> --project-ref vledjjqhycdkzgwwwlvu",
+      }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
 
   try {
-    // Step 1: Generate image via Flux Pro
-    console.log(`[generate-linkedin-visual] Generating image for post ${brief.post_id}`);
-    const payload = buildFluxPayload(brief);
-    const falImageUrl = await submitToFlux(payload, falApiKey);
-    console.log(`[generate-linkedin-visual] Image generated: ${falImageUrl}`);
+    // Step 1: Generate image via Nano Banana Pro
+    const { base64Data, mimeType, modelUsed } = await generateWithNanoBanana(
+      brief,
+      geminiApiKey
+    );
+    console.log(`[generate-linkedin-visual] Generated via ${modelUsed}`);
+
+    // Decode base64 to bytes for Drive upload
+    const imageBytes = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
 
     // Step 2: Upload to Google Drive (if credentials available)
     let driveUrl: string | undefined;
     let driveFileId: string | undefined;
+    const ext = mimeType.includes("jpeg") ? "jpg" : "png";
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const filename = `linkedin-visual_${brief.post_id}_${dateStr}.${ext}`;
 
     if (driveFolderId && serviceAccountJson) {
-      const dateStr = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-      const filename = `linkedin-visual_${brief.post_id}_${dateStr}.png`;
       const driveResult = await uploadToDrive(
-        falImageUrl,
+        imageBytes,
+        mimeType,
         filename,
         driveFolderId,
         serviceAccountJson
@@ -342,15 +390,18 @@ Deno.serve(async (req: Request) => {
       driveFileId = driveResult.fileId;
       console.log(`[generate-linkedin-visual] Uploaded to Drive: ${driveUrl}`);
     } else {
-      console.warn("[generate-linkedin-visual] Google Drive credentials not set — skipping upload");
+      console.warn(
+        "[generate-linkedin-visual] GOOGLE_DRIVE_FOLDER_ID or GOOGLE_SERVICE_ACCOUNT not set — skipping Drive upload"
+      );
     }
 
     const response: GenerateResponse = {
       success: true,
       post_id: brief.post_id,
-      image_url: falImageUrl,
+      image_url: driveUrl ?? "",
       drive_url: driveUrl,
       drive_file_id: driveFileId,
+      model_used: modelUsed,
     };
 
     return new Response(JSON.stringify(response), {

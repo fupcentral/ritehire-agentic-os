@@ -1,4 +1,15 @@
+# System
 .DS_Store
+
+# Secrets & local config
 .mcp.json
 *.env
 .env.local
+.env.*.local
+
+# Build scripts (one-off commit helpers)
+.git-commit-*.sh
+
+# Build output (also in dashboard/.gitignore — belt and braces)
+dashboard/dist/
+dashboard/node_modules/

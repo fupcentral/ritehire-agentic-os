@@ -51,7 +51,7 @@ export default function Marketing() {
    LINKEDIN TAB
    ============================================================ */
 function LinkedInTab() {
-    const { entries, loading } = useActivityLog({ agentId: 'linkedin-outbound', limit: 50 })
+    const { entries, loading } = useActivityLog({ agentName: 'LinkedIn', limit: 50 })
     const [selectedPost, setSelectedPost] = useState<ActivityLogEntry | null>(null)
 
     const pending = entries.filter((e) => e.status === 'pending')
@@ -165,7 +165,7 @@ function LinkedInTab() {
    EMAIL SEQUENCES TAB
    ============================================================ */
 function EmailSequencesTab() {
-    const { entries, loading } = useActivityLog({ agentId: 'email-outbound', limit: 50 })
+    const { entries, loading } = useActivityLog({ agentName: 'Email', limit: 50 })
 
     const drafts = entries.filter((e) => e.status === 'pending')
     const sent = entries.filter((e) => e.status === 'success')
