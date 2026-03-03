@@ -5,6 +5,7 @@ import SkeletonLoader from '../components/ui/SkeletonLoader'
 import EmptyState from '../components/ui/EmptyState'
 import { useDeals } from '../hooks/useDeals'
 import { useActivityLog } from '../hooks/useActivityLog'
+import DepartmentTasks from '../components/ui/DepartmentTasks'
 import {
     DollarSign,
     TrendingUp,
@@ -237,6 +238,9 @@ export default function Finance() {
                     description="Manual cost entry per sprint will be available in a future update."
                 />
             </Card>
+
+            {/* Department Tasks */}
+            <DepartmentTasks agentNames={['CFO', 'Admin']} title="Finance & Admin Tasks" />
         </div>
     )
 }

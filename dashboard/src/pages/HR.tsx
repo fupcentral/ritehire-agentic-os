@@ -5,6 +5,7 @@ import EmptyState from '../components/ui/EmptyState'
 import { useAgents } from '../hooks/useAgents'
 import { useActivityLog } from '../hooks/useActivityLog'
 import { getStatusColor } from '../lib/types'
+import DepartmentTasks from '../components/ui/DepartmentTasks'
 import {
     Users,
     Shield,
@@ -229,6 +230,9 @@ export default function HR() {
                     </div>
                 </div>
             </Card>
+
+            {/* Department Tasks */}
+            <DepartmentTasks agentNames={['Legal', 'Admin']} title="HR & Compliance Tasks" />
         </div>
     )
 }

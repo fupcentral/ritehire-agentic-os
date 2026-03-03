@@ -8,6 +8,7 @@ import EmptyState from '../components/ui/EmptyState'
 import Drawer from '../components/ui/Drawer'
 import Button from '../components/ui/Button'
 import { useActivityLog } from '../hooks/useActivityLog'
+import DepartmentTasks from '../components/ui/DepartmentTasks'
 import type { ActivityLogEntry } from '../lib/types'
 import {
     Linkedin,
@@ -33,6 +34,7 @@ export default function Marketing() {
                     { key: 'linkedin', label: 'LinkedIn' },
                     { key: 'email-sequences', label: 'Email Sequences' },
                     { key: 'brand', label: 'Brand' },
+                    { key: 'tasks', label: 'Tasks' },
                 ]}
                 activeTab={activeTab}
                 onChange={setActiveTab}
@@ -42,6 +44,7 @@ export default function Marketing() {
                 {activeTab === 'linkedin' && <LinkedInTab />}
                 {activeTab === 'email-sequences' && <EmailSequencesTab />}
                 {activeTab === 'brand' && <BrandTab />}
+                {activeTab === 'tasks' && <DepartmentTasks agentNames={['LinkedIn', 'Email', 'Brand']} title="Marketing Tasks" />}
             </div>
         </div>
     )
