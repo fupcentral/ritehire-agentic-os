@@ -61,6 +61,25 @@ This file is the governing project spec for the RiteHire Agentic OS.
   - finance
   - hierarchy and agent operating views
 
+## Manual Instructions Standard
+
+- Whenever Claude asks Nabeel to do anything manually, always include detailed step-by-step instructions.
+- Every step must include: where to go (URL or app), what to click, what to type, and what the screen should look like after the action.
+- Never assume Nabeel knows where a button is or what a menu looks like. Describe it.
+- Include screenshots descriptions where helpful (e.g. "you should see a green button labelled X at the top right").
+- If there are multiple steps, number them clearly.
+
+## Daily Report on Limit Reached
+
+- Whenever a Claude usage limit is reached mid-session, immediately generate a daily update report in Notion (under Daily Reports — RiteHire OS) before pausing.
+- The report should cover everything accomplished in the session up to that point, what is still pending, and what the next steps are when the session resumes.
+- This ensures Nabeel always has a written record of progress even when a session is interrupted.
+
+## Daily Report Auto-Approvals
+
+- When generating a daily report, auto-approve any intermediate steps or confirmations required to complete it — do not ask Nabeel to approve individual actions mid-report.
+- Just run it, write it, post it to Notion, and present the final result.
+
 ## AI Runtime Preference
 
 - Wherever a configurable reasoning/default model exists in the surrounding tooling, prefer Moonshot Kimi first.

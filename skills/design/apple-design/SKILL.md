@@ -33,7 +33,7 @@ Apply Apple's Human Interface Guidelines to create interfaces that feel native, 
 
 ### Font Stack
 - **Display / Headlines:** SF Pro Display (>20pt) or New York (editorial contexts)
-- **Body / UI:** SF Pro Text (<=19pt)
+- **Body / UI:** SF Pro Text (≤19pt)
 - **Monospace:** SF Mono
 - **Minimum legible size:** 11pt (iOS), 13pt (macOS)
 
@@ -55,7 +55,7 @@ Apply Apple's Human Interface Guidelines to create interfaces that feel native, 
 ### Rules
 - Use Dynamic Type. Never hardcode font sizes.
 - Tracking: keep default. Avoid manual letter-spacing.
-- Line height: 1.2-1.5x for body, tighter for display.
+- Line height: 1.2–1.5× for body, tighter for display.
 - Left-align body text. Center only for short labels/titles.
 
 ---
@@ -70,7 +70,7 @@ Apply Apple's Human Interface Guidelines to create interfaces that feel native, 
 - **Yellow** `#FFCC00` — attention
 - **Purple** `#AF52DE` — premium
 - **Teal** `#5AC8FA` — informational
-- **Gray** system grays 1-6 — UI chrome, separators
+- **Gray** system grays 1–6 — UI chrome, separators
 
 ### Rules
 - Always provide Light and Dark mode variants.
@@ -86,7 +86,7 @@ Apply Apple's Human Interface Guidelines to create interfaces that feel native, 
 ### 8pt Grid
 - Base unit: **8pt**
 - Common spacings: 4, 8, 12, 16, 20, 24, 32, 44, 56
-- Touch targets: **minimum 44x44pt** (Apple requirement)
+- Touch targets: **minimum 44×44pt** (Apple requirement)
 - Margins: 16pt standard, 20pt for full-bleed content
 
 ### Safe Areas
@@ -109,7 +109,7 @@ Apply Apple's Human Interface Guidelines to create interfaces that feel native, 
 - **Sidebar** (iPad/Mac): List-based, collapsible. Source list style.
 
 ### Buttons
-- **Primary (Filled)**: Rounded rect, tint fill, white text. Corner radius: continuousCurve (~10pt).
+- **Primary (Filled)**: Rounded rect, tint fill, white text. Corner radius: continuousCurve (~10pt for standard).
 - **Secondary (Gray)**: System gray fill, label color text.
 - **Tertiary (Tinted)**: Tint color background at 12% opacity.
 - **Destructive**: Red fill or red tint.
@@ -122,7 +122,8 @@ Apply Apple's Human Interface Guidelines to create interfaces that feel native, 
 - Placeholder text: secondaryLabel color.
 
 ### Lists & Tables
-- Grouped style for settings/forms. Inset grouped for modern iOS 13+ apps.
+- Grouped style for settings/forms.
+- Inset grouped for modern iOS 13+ apps.
 - Swipe actions: red for destructive, other tints for constructive actions.
 
 ### Modals
@@ -131,7 +132,7 @@ Apply Apple's Human Interface Guidelines to create interfaces that feel native, 
 - **Popover**: Arrow points to source on iPad/Mac.
 
 ### Cards
-- Corner radius: 12-16pt (continuousRoundedRectangle)
+- Corner radius: 12–16pt (continuousRoundedRectangle)
 - Shadow: `0 2px 8px rgba(0,0,0,0.08)` light mode; reduce or eliminate in dark mode
 - Background: secondarySystemBackground (grouped) or systemBackground (card on bg)
 
@@ -166,16 +167,16 @@ Apply Apple's Human Interface Guidelines to create interfaces that feel native, 
 
 ### Principles
 - Animations communicate state changes, not style.
-- Default duration: 0.3s. Quick feedback: 0.2s.
-- Use spring physics (damping 0.7-0.9) for natural feel.
-- Reduce motion: always provide fallback.
+- Default duration: 0.3s for most transitions. Use 0.2s for quick feedback.
+- Use spring physics (damping 0.7–0.9) for natural feel.
+- Reduce motion: always provide `.animation(nil)` fallback.
 
 ### Standard Patterns
 - **Push navigation**: Horizontal slide (250ms, ease-in-out)
 - **Modal present**: Slide up from bottom
 - **Sheet dismiss**: Slide down, spring
 - **Fade**: Subtle 0.2s for contextual changes
-- **Scale**: 0.92->1.0 for tap feedback (spring)
+- **Scale**: 0.92→1.0 for tap feedback (spring)
 
 ---
 
@@ -198,17 +199,19 @@ Apply Apple's Human Interface Guidelines to create interfaces that feel native, 
 - **Dynamic Type**: All text scales from xSmall to AX5.
 - **VoiceOver**: Every interactive element has an accessibility label.
 - **Color Independence**: Never use color alone to convey meaning.
-- **Minimum Touch Target**: 44x44pt.
+- **Minimum Touch Target**: 44×44pt.
 - **Contrast**: 4.5:1 for normal text, 3:1 for large text.
 
 ### Enhanced (Recommended)
 - Support Switch Control and Full Keyboard Access.
-- Implement accessibilityHint for non-obvious actions.
-- Group related elements with accessibilityElement(children: .combine).
+- Implement `accessibilityHint` for non-obvious actions.
+- Group related elements with `accessibilityElement(children: .combine)`.
 
 ---
 
 ## Review Checklist
+
+Use this when critiquing a design for HIG compliance:
 
 - [ ] Typography uses SF Pro / Dynamic Type
 - [ ] Colors use semantic system values (light + dark)

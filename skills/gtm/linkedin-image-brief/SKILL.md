@@ -2,17 +2,21 @@
 
 **Owner agent:** LinkedIn Outbound Specialist / Brand  
 **Category:** GTM  
-**Approval gate:** CDO review recommended before handoff to designer  
-**Output destination:** Google Drive /RiteHire OS/Deliverables/  
-**Last updated:** 2026-03-02
+**Approval gate:** Human review required before sending to designer  
+**Last updated:** 2026-03-03
+
+---
+
+## MANDATORY: Read brand files first
+Before executing:
+1. `/brand/BRAND_KIT.md` — ALL visual specs, colors, fonts, logo rules, Apple-design standard
+2. `/skills/gtm/linkedin-draft-post/ritehire-linkedin-skill-v1.2.md` — Visual section (Section 10)
 
 ---
 
 ## What this skill does
 
-Creates a structured creative brief for a LinkedIn post image or visual asset. The brief
-is handed off to a designer (human or AI image generator) to produce the final asset.
-This skill does not generate images — it writes the brief.
+Takes an approved LinkedIn post and generates a complete, brand-locked visual brief for the accompanying image. The brief is production-ready for a designer or AI image tool to execute directly.
 
 ---
 
@@ -20,80 +24,117 @@ This skill does not generate images — it writes the brief.
 
 | Input | Required | Notes |
 |---|---|---|
-| Post text | Yes | The approved LinkedIn post this image will accompany |
-| Visual concept (optional) | No | Any existing idea for the visual |
-| Format | No | Default: 1200×628px LinkedIn link image. Options: square (1080×1080), story (1080×1920) |
-| Deadline | No | When is this needed? |
+| Approved post text | Yes | The final approved LinkedIn post |
+| Hook visual from post | Yes | The visual scene referenced in the hook (inbox, SLA sheet, checklist, etc.) |
+| Visual type | No | Default: single image. Options: single_image / carousel / checklist_card |
 
 ---
 
 ## Execution steps
 
-1. **Read the post** — Understand the core message, tone, and audience. The image must
-   amplify the post — not illustrate it literally.
+### Step 1: Load brand kit
+Read `/brand/BRAND_KIT.md` completely. Confirm:
+- Primary colors: `#1a2332`, `#009886`, `#4a5568`, `#e5e7eb`
+- Typography: Bold geometric sans-serif (24px heading, 14px body)
+- Logo: white version on dark, 1x clear space, min 48px
+- LinkedIn specs: 1200×1200px single, 1080×1350px carousel, 80px margins
+- Apple-design standard: clarity, deference, depth — every pixel intentional
 
-2. **Define the visual concept** — Write one sentence: what should a viewer feel or
-   understand in 3 seconds of looking at this image?
+### Step 2: Map hook to visual type
+| Hook visual | Visual treatment |
+|-------------|-----------------|
+| Inbox | Inbox-style card mock, dark bg, truncated subject lines, brand avatar |
+| SLA spreadsheet | Spreadsheet mock, 3–5 rows, teal checkmarks, column headers |
+| Offer letter clause | Contract card with highlighted clause, fake clause text |
+| Payroll run | Checklist card, teal ✓ for completed, #4a5568 for pending |
+| Onboarding checklist | Checklist card, numbered steps, brand colors |
+| Quarterly payout ledger | Ledger table, 4 rows, Client A/B/C/D, teal PAID badge |
 
-3. **Write the brief** using the output format below.
+### Step 3: Generate visual brief
+Output using this exact format:
 
-4. **Brand check** — Confirm all brief elements comply with:
-   - Colours: #FFFFFF (white) · #081326 (navy) · #12AF84 (green accent)
-   - No stock photos. Prefer clean illustration, typography-led, or abstract geometric.
-   - Apple-grade: sparse, calm, intentional. Never busy.
+```
+=== VISUAL BRIEF ===
 
-5. **Save brief to Google Drive** — File at:
-   `/RiteHire OS/Deliverables/[YYYY-MM-DD]-linkedin-image-brief-[short-slug].md`
+Post ID: [matching post ID]
+Visual type: [single image / carousel / card]
+Concept: [1 sentence describing the visual]
 
-6. **Log to activity_log**:
-   ```
-   agent_id: linkedin-outbound
-   skill_used: linkedin-image-brief
-   output_summary: Image brief written for [post slug]. Saved to Drive /Deliverables/.
-   status: completed
-   ```
+--- ON-IMAGE COPY ---
+Headline: [max 6 words, bold]
+Body/Bullets:
+  • [line 1]
+  • [line 2]  
+  • [line 3 — max 3 bullets]
+Footer: RiteHire — Pakistan EOR/Payroll/Compliance
+
+--- BRAND CONSTRAINTS ---
+Background: #1a2332
+Accent: #009886
+Text: #ffffff (on dark) / #1a2332 (on light)
+Font: Bold 24px heading / Regular 14px body — geometric sans-serif
+Logo: White version, top-left, 1x clear space, min 48px width
+Grid: 8px base grid
+Corners: 8px+ radius on cards
+Shadows: 0 4px 24px rgba(0,0,0,0.12)
+
+--- GENERATION PROMPT (paste to designer / AI tool) ---
+Create a LinkedIn single image for RiteHire.
+
+Size: 1200×1200px
+Safe margins: 80px all sides
+Background: #1a2332 (dark navy)
+Accent color: #009886 (teal) — used for highlights, icons, badges only
+Text color: #ffffff on dark backgrounds
+Typography: Bold geometric sans-serif. Heading 24px bold. Body 14px regular.
+Logo: RiteHire logo (white version). Top-left corner. 1x clear space. Min 48px wide.
+Layout: 8px grid. Rounded card corners (8px min). Soft shadow on cards.
+
+[Visual type description: e.g., "Show a spreadsheet-style mock with 5 rows..."]
+
+On-image copy:
+  Headline: "[headline]"
+  Bullets:
+    • [bullet 1]
+    • [bullet 2]
+    • [bullet 3]
+  Footer: "RiteHire — Pakistan EOR/Payroll/Compliance"
+
+Style requirements:
+- Apple-grade minimal design — every element has a purpose
+- No stock photo faces, no real names, no real client data
+- Use placeholder names: "Client A", "EOR Partner", "Hiring Manager"
+- Flat UI mock style — not photorealistic
+- Crisp text rendering, no artifacts
+- Export: PNG, 1200×1200px
+
+--- EXPORT SPECS ---
+Format: PNG
+Size: 1200×1200px (or 1080×1350px for carousel)
+Margins: 80px all sides
+Color profile: sRGB
+
+--- VISUAL AUTOMATION NOTE ---
+Recommended tools (priority order):
+1. Canva API/MCP — template-based, fastest for brand consistency
+2. DALL-E 3 / Midjourney — for custom UI mock illustration
+3. Claude artifact (HTML/CSS card render) — fallback for rapid iteration
+```
+
+### Step 4: Apple-design quality check
+Before finalising brief:
+- [ ] Would this look at home in an Apple product showcase?
+- [ ] Can a viewer understand hierarchy in under 3 seconds?
+- [ ] Is every element intentional? Nothing decorative for its own sake.
+- [ ] Brand colors only — no invented palette
+- [ ] Logo correctly placed with clear space
+- [ ] Text is readable at thumbnail size (60×60px)
+
+### Step 5: Save brief
+Save brief to Google Drive: `/RiteHire OS/Content/LinkedIn/[YYYY-MM-DD]-[post-id]-visual-brief.md`  
+Log to activity_log.
 
 ---
 
-## Output format
-
-```
-# LinkedIn Image Brief
-Date: [YYYY-MM-DD]
-Post: [first 10 words of associated post...]
-Format: [dimensions]
-
-## CORE MESSAGE
-One sentence: what should the viewer feel in 3 seconds?
-
-## VISUAL DIRECTION
-[2–3 sentences describing the visual concept. Be specific. Don't say "clean and minimal" — 
-describe what is actually in the frame.]
-
-## COPY ON IMAGE
-Headline: [if any — max 6 words]
-Subtext: [if any — max 12 words]
-Logo: Bottom right. Use ritehire-logo-mark.svg
-
-## COLOUR PALETTE
-Primary: [which brand colour dominates?]
-Secondary: [supporting colour]
-Text: [white or navy]
-
-## THINGS TO AVOID
-- [List 2–3 visual approaches that would be off-brand for this brief]
-
-## REFERENCE DIRECTION
-[Optional: describe 1–2 examples of visual styles that match the intent, 
-even from other brands]
-```
-
----
-
-## Quality checklist
-
-- [ ] Brief is specific enough for a designer to execute without back-and-forth
-- [ ] Brand colours specified correctly
-- [ ] No stock photo direction
-- [ ] Saved to Google Drive /Deliverables/ with correct filename format
-- [ ] Logged to activity_log
+## Output
+Present the complete visual brief and await designer confirmation or revision request.
