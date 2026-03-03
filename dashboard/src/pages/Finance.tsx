@@ -11,13 +11,9 @@ import DepartmentTasks from '../components/ui/DepartmentTasks'
 import {
     DollarSign,
     TrendingUp,
-    TrendingDown,
     Activity,
     Calculator,
     BarChart3,
-    ArrowUpRight,
-    ArrowDownRight,
-    Minus,
 } from 'lucide-react'
 
 /* ============================================================
@@ -27,12 +23,6 @@ interface PnlLineItem {
     label: string
     monthly: number
     note?: string
-}
-
-interface PnlSection {
-    title: string
-    items: PnlLineItem[]
-    type: 'revenue' | 'cost'
 }
 
 /* ============================================================
@@ -166,184 +156,273 @@ export default function Finance() {
 }
 
 /* ============================================================
-   P&L STATEMENT TAB
+   P&L STATEMENT — 12-MONTH VIEW
    ============================================================ */
-function PnlRow({
-    label,
-    monthly,
-    annual,
-    note,
-    bold,
-    highlight,
-    isNegative,
-}: {
-    label: string
-    monthly: number
-    annual: number
-    note?: string
-    bold?: boolean
-    highlight?: 'green' | 'red' | 'blue' | 'navy'
-    isNegative?: boolean
-}) {
-    const fmt = (n: number) => {
-        const abs = Math.abs(n)
-        const str = `$${abs.toLocaleString()}`
-        return n < 0 ? `(${str})` : str
+
+// Generate 12 months ending at current month
+function getMonthColumns(): { key: string; label: string; shortLabel: string }[] {
+    const now = new Date()
+    const months: { key: string; label: string; shortLabel: string }[] = []
+    for (let i = 11; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+        const label = d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+        const shortLabel = d.toLocaleDateString('en-US', { month: 'short' })
+        months.push({ key, label, shortLabel })
     }
-
-    const textColor = highlight === 'green'
-        ? 'text-teal'
-        : highlight === 'red'
-            ? 'text-status-blocked'
-            : highlight === 'blue'
-                ? 'text-blue-600'
-                : highlight === 'navy'
-                    ? 'text-navy'
-                    : 'text-charcoal'
-
-    return (
-        <div className={`
-            grid grid-cols-12 gap-2 px-5 py-2.5 items-center
-            ${bold ? 'bg-surface/60 rounded-lg' : 'border-b border-light-gray/15'}
-        `}>
-            <div className="col-span-5 min-w-0">
-                <div className={`text-[13px] ${bold ? 'font-bold' : 'font-medium'} ${highlight ? textColor : 'text-navy'} truncate`}>
-                    {!bold && <span className="text-charcoal/30 mr-2">·</span>}
-                    {label}
-                </div>
-                {note && (
-                    <div className="text-[10px] text-charcoal/40 ml-4 truncate">{note}</div>
-                )}
-            </div>
-            <div className={`col-span-3 text-right text-[13px] ${bold ? 'font-bold' : 'font-medium'} ${textColor}`}>
-                {isNegative && monthly !== 0 && <span className="text-charcoal/30 mr-0.5">−</span>}
-                {fmt(monthly)}
-            </div>
-            <div className={`col-span-3 text-right text-[13px] ${bold ? 'font-bold' : 'font-medium'} ${textColor}`}>
-                {isNegative && annual !== 0 && <span className="text-charcoal/30 mr-0.5">−</span>}
-                {fmt(annual)}
-            </div>
-            <div className="col-span-1 flex justify-end">
-                {highlight === 'green' && <ArrowUpRight size={14} className="text-teal" />}
-                {highlight === 'red' && monthly !== 0 && <ArrowDownRight size={14} className="text-status-blocked" />}
-                {highlight === 'navy' && <Minus size={14} className="text-navy/30" />}
-            </div>
-        </div>
-    )
+    return months
 }
 
-function SectionDivider() {
-    return <div className="border-t-2 border-navy/8 my-1" />
+interface RowData {
+    label: string
+    values: number[]           // 12 monthly values
+    total: number
+    type: 'item' | 'header' | 'subtotal' | 'net'
+    highlight?: 'green' | 'red'
+    indent?: boolean
+    note?: string
 }
 
 function ProfitAndLoss({ activeMRR, dealsLoading }: { activeMRR: number; dealsLoading: boolean }) {
-    // Calculate totals
-    const totalCOGS = COGS.reduce((s, c) => s + c.monthly, 0)
-    const totalOpEx = OPERATING_EXPENSES.reduce((s, c) => s + c.monthly, 0)
-    const grossProfit = activeMRR - totalCOGS
-    const grossMargin = activeMRR > 0 ? (grossProfit / activeMRR) * 100 : 0
-    const netProfit = grossProfit - totalOpEx
-    const netMargin = activeMRR > 0 ? (netProfit / activeMRR) * 100 : 0
+    const months = getMonthColumns()
+
+    // For demo purposes, simulate revenue ramp-up over 12 months
+    // Current month gets real MRR, prior months show a growth trajectory
+    const revenueByMonth = months.map((_, i) => {
+        // Simple ramp: month 0 (oldest) = 0, month 11 (current) = activeMRR
+        // Later months gradually approach current MRR
+        const ramp = i <= 2 ? 0 : Math.round(activeMRR * ((i - 2) / 9))
+        // Current month always uses actual MRR
+        return i === 11 ? activeMRR : ramp
+    })
+
+    const totalCOGSMonthly = COGS.reduce((s, c) => s + c.monthly, 0)
+    const totalOpExMonthly = OPERATING_EXPENSES.reduce((s, c) => s + c.monthly, 0)
+
+    // Build row data for the table
+    const rows: RowData[] = []
+
+    // ─── REVENUE ───
+    rows.push({
+        label: 'Revenue',
+        values: revenueByMonth,
+        total: revenueByMonth.reduce((s, v) => s + v, 0),
+        type: 'header',
+        highlight: 'green',
+    })
+    rows.push({
+        label: 'EOR Service Revenue (MRR)',
+        values: revenueByMonth,
+        total: revenueByMonth.reduce((s, v) => s + v, 0),
+        type: 'item',
+        indent: true,
+        note: 'Closed-won deal MRR',
+    })
+
+    // ─── COGS ───
+    const cogsMonthlyValues = months.map(() => totalCOGSMonthly)
+    rows.push({
+        label: 'Cost of Revenue (COGS)',
+        values: cogsMonthlyValues,
+        total: totalCOGSMonthly * 12,
+        type: 'header',
+        highlight: 'red',
+    })
+    for (const item of COGS) {
+        rows.push({
+            label: item.label,
+            values: months.map(() => item.monthly),
+            total: item.monthly * 12,
+            type: 'item',
+            indent: true,
+            note: item.note,
+        })
+    }
+
+    // ─── GROSS PROFIT ───
+    const grossByMonth = revenueByMonth.map((r) => r - totalCOGSMonthly)
+    const grossTotal = grossByMonth.reduce((s, v) => s + v, 0)
+    const revenueTotal = revenueByMonth.reduce((s, v) => s + v, 0)
+    const grossMargin = revenueTotal > 0 ? (grossTotal / revenueTotal) * 100 : 0
+    rows.push({
+        label: `Gross Profit (${grossMargin.toFixed(0)}%)`,
+        values: grossByMonth,
+        total: grossTotal,
+        type: 'subtotal',
+        highlight: grossTotal >= 0 ? 'green' : 'red',
+    })
+
+    // ─── OPERATING EXPENSES ───
+    const opexMonthlyValues = months.map(() => totalOpExMonthly)
+    rows.push({
+        label: 'Operating Expenses',
+        values: opexMonthlyValues,
+        total: totalOpExMonthly * 12,
+        type: 'header',
+        highlight: 'red',
+    })
+    for (const item of OPERATING_EXPENSES) {
+        rows.push({
+            label: item.label,
+            values: months.map(() => item.monthly),
+            total: item.monthly * 12,
+            type: 'item',
+            indent: true,
+            note: item.note,
+        })
+    }
+
+    // ─── NET INCOME ───
+    const netByMonth = grossByMonth.map((g) => g - totalOpExMonthly)
+    const netTotal = netByMonth.reduce((s, v) => s + v, 0)
+    const netMargin = revenueTotal > 0 ? (netTotal / revenueTotal) * 100 : 0
+    rows.push({
+        label: 'Net Income / (Loss)',
+        values: netByMonth,
+        total: netTotal,
+        type: 'net',
+        highlight: netTotal >= 0 ? 'green' : 'red',
+    })
+
+    const burnRate = totalCOGSMonthly + totalOpExMonthly
 
     if (dealsLoading) {
         return <Card><SkeletonLoader variant="row" count={12} /></Card>
     }
 
+    const fmt = (n: number) => {
+        if (n === 0) return '$0'
+        const abs = Math.abs(n)
+        const str = abs >= 1000 ? `$${(abs / 1000).toFixed(1)}k` : `$${abs.toLocaleString()}`
+        return n < 0 ? `(${str})` : str
+    }
+    const fmtFull = (n: number) => {
+        if (n === 0) return '$0'
+        const abs = Math.abs(n)
+        const str = `$${abs.toLocaleString()}`
+        return n < 0 ? `(${str})` : str
+    }
+
     return (
         <div className="space-y-4">
-            <Card>
-                <CardHeader
-                    title="Profit & Loss Statement"
-                    subtitle="Monthly operating financials"
-                    action={
-                        <div className="flex items-center gap-1 text-[11px] text-charcoal/50">
-                            <BarChart3 size={12} />
-                            <span>March 2026</span>
-                        </div>
-                    }
-                />
-
-                {/* Column headers */}
-                <div className="grid grid-cols-12 gap-2 px-5 py-2 text-[10px] font-semibold text-charcoal/40 uppercase tracking-wider">
-                    <div className="col-span-5">Line Item</div>
-                    <div className="col-span-3 text-right">Monthly</div>
-                    <div className="col-span-3 text-right">Annualized</div>
-                    <div className="col-span-1" />
+            <Card padding={false}>
+                <div className="px-5 pt-5 pb-3">
+                    <CardHeader
+                        title="Profit & Loss Statement"
+                        subtitle="12-month trailing view — FY 2025-26"
+                        action={
+                            <div className="flex items-center gap-1 text-[11px] text-charcoal/50">
+                                <BarChart3 size={12} />
+                                <span>{months[0].label} — {months[11].label}</span>
+                            </div>
+                        }
+                    />
                 </div>
 
-                {/* ─── REVENUE ─── */}
-                <PnlRow label="Revenue (MRR)" monthly={activeMRR} annual={activeMRR * 12} bold highlight="green" />
-                <PnlRow label="Recurring Revenue (Closed-Won)" monthly={activeMRR} annual={activeMRR * 12} note="From closed deals" />
+                <div className="overflow-x-auto">
+                    <table className="w-full min-w-[1100px]" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
+                        <thead>
+                            <tr className="border-b-2 border-navy/10">
+                                <th className="sticky left-0 z-10 bg-white text-left text-[10px] font-semibold text-charcoal/40 uppercase tracking-wider px-5 py-2.5 w-[220px] min-w-[220px]">
+                                    Line Item
+                                </th>
+                                {months.map((m) => (
+                                    <th key={m.key} className="text-right text-[10px] font-semibold text-charcoal/40 uppercase tracking-wider px-2 py-2.5 min-w-[72px]">
+                                        {m.shortLabel}
+                                    </th>
+                                ))}
+                                <th className="text-right text-[10px] font-bold text-navy uppercase tracking-wider px-4 py-2.5 min-w-[90px] bg-surface/40">
+                                    FY Total
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {rows.map((row, idx) => {
+                                const isHeader = row.type === 'header'
+                                const isSubtotal = row.type === 'subtotal'
+                                const isNet = row.type === 'net'
+                                const isBold = isHeader || isSubtotal || isNet
 
-                <SectionDivider />
+                                const textColor = row.highlight === 'green'
+                                    ? 'text-teal'
+                                    : row.highlight === 'red'
+                                        ? 'text-status-blocked'
+                                        : 'text-navy'
 
-                {/* ─── COGS ─── */}
-                <PnlRow label="Cost of Goods Sold (COGS)" monthly={totalCOGS} annual={totalCOGS * 12} bold highlight="red" isNegative />
-                {COGS.map((item) => (
-                    <PnlRow key={item.label} label={item.label} monthly={item.monthly} annual={item.monthly * 12} note={item.note} />
-                ))}
+                                return (
+                                    <tr
+                                        key={idx}
+                                        className={`
+                                            border-b transition-colors
+                                            ${isNet
+                                                ? row.highlight === 'green'
+                                                    ? 'bg-teal/5 border-teal/15'
+                                                    : 'bg-red-50/50 border-red-100'
+                                                : isHeader || isSubtotal
+                                                    ? 'bg-surface/40 border-navy/8'
+                                                    : 'border-light-gray/20 hover:bg-surface/20'
+                                            }
+                                        `}
+                                    >
+                                        {/* Label */}
+                                        <td className={`
+                                            sticky left-0 z-10 px-5 py-2
+                                            ${isNet
+                                                ? row.highlight === 'green' ? 'bg-teal/5' : 'bg-red-50/50'
+                                                : isHeader || isSubtotal ? 'bg-surface/40' : 'bg-white'
+                                            }
+                                        `}>
+                                            <div className={`
+                                                text-[12px] truncate
+                                                ${isBold ? 'font-bold' : 'font-medium'}
+                                                ${isBold ? textColor : 'text-charcoal'}
+                                                ${row.indent ? 'pl-4' : ''}
+                                            `}>
+                                                {row.indent && <span className="text-charcoal/20 mr-1.5">·</span>}
+                                                {row.label}
+                                            </div>
+                                        </td>
 
-                <SectionDivider />
+                                        {/* Monthly values */}
+                                        {row.values.map((val, mi) => (
+                                            <td
+                                                key={mi}
+                                                className={`
+                                                    text-right px-2 py-2 text-[11px] tabular-nums
+                                                    ${isBold ? 'font-bold' : 'font-medium'}
+                                                    ${isNet || isSubtotal
+                                                        ? val >= 0 ? 'text-teal' : 'text-status-blocked'
+                                                        : isBold ? textColor : val === 0 ? 'text-charcoal/25' : 'text-charcoal/70'
+                                                    }
+                                                `}
+                                            >
+                                                {val === 0 ? '—' : fmt(isHeader && row.highlight === 'red' ? -val : val)}
+                                            </td>
+                                        ))}
 
-                {/* ─── GROSS PROFIT ─── */}
-                <PnlRow
-                    label={`Gross Profit (${grossMargin.toFixed(0)}% margin)`}
-                    monthly={grossProfit}
-                    annual={grossProfit * 12}
-                    bold
-                    highlight={grossProfit >= 0 ? 'green' : 'red'}
-                />
-
-                <SectionDivider />
-
-                {/* ─── OPERATING EXPENSES ─── */}
-                <PnlRow label="Operating Expenses (OpEx)" monthly={totalOpEx} annual={totalOpEx * 12} bold highlight="red" isNegative />
-                {OPERATING_EXPENSES.map((item) => (
-                    <PnlRow key={item.label} label={item.label} monthly={item.monthly} annual={item.monthly * 12} note={item.note} />
-                ))}
-
-                <SectionDivider />
-
-                {/* ─── NET PROFIT ─── */}
-                <div className={`
-                    mx-4 my-3 p-4 rounded-xl
-                    ${netProfit >= 0
-                        ? 'bg-gradient-to-r from-teal/5 to-teal/10 border border-teal/15'
-                        : 'bg-gradient-to-r from-red-50 to-red-50/50 border border-red-100'
-                    }
-                `}>
-                    <div className="grid grid-cols-12 gap-2 items-center">
-                        <div className="col-span-5">
-                            <div className={`text-sm font-bold ${netProfit >= 0 ? 'text-teal' : 'text-status-blocked'}`}>
-                                Net Profit / (Loss)
-                            </div>
-                            <div className="text-[10px] text-charcoal/50 mt-0.5">
-                                {netMargin.toFixed(1)}% net margin
-                            </div>
-                        </div>
-                        <div className={`col-span-3 text-right text-base font-bold ${netProfit >= 0 ? 'text-teal' : 'text-status-blocked'}`}>
-                            {netProfit < 0 ? '(' : ''}${Math.abs(netProfit).toLocaleString()}{netProfit < 0 ? ')' : ''}
-                            <span className="text-[10px] font-normal text-charcoal/40">/mo</span>
-                        </div>
-                        <div className={`col-span-3 text-right text-base font-bold ${netProfit >= 0 ? 'text-teal' : 'text-status-blocked'}`}>
-                            {netProfit < 0 ? '(' : ''}${Math.abs(netProfit * 12).toLocaleString()}{netProfit < 0 ? ')' : ''}
-                            <span className="text-[10px] font-normal text-charcoal/40">/yr</span>
-                        </div>
-                        <div className="col-span-1 flex justify-end">
-                            {netProfit >= 0
-                                ? <ArrowUpRight size={18} className="text-teal" />
-                                : <ArrowDownRight size={18} className="text-status-blocked" />
-                            }
-                        </div>
-                    </div>
+                                        {/* FY Total */}
+                                        <td className={`
+                                            text-right px-4 py-2 text-[12px] font-bold tabular-nums bg-surface/40
+                                            ${isNet || isSubtotal
+                                                ? row.total >= 0 ? 'text-teal' : 'text-status-blocked'
+                                                : isBold ? textColor : 'text-navy'
+                                            }
+                                        `}>
+                                            {fmtFull(isHeader && row.highlight === 'red' ? -row.total : row.total)}
+                                        </td>
+                                    </tr>
+                                )
+                            })}
+                        </tbody>
+                    </table>
                 </div>
             </Card>
 
-            {/* P&L Summary Cards */}
+            {/* Summary Cards */}
             <div className="grid grid-cols-3 gap-4">
                 <div className="p-4 rounded-xl bg-white border border-light-gray/50 shadow-sm">
-                    <div className="text-[10px] font-semibold text-charcoal/40 uppercase tracking-wider mb-1">Burn Rate</div>
-                    <div className="text-lg font-bold text-navy">${(totalCOGS + totalOpEx).toLocaleString()}<span className="text-xs font-normal text-charcoal/40">/mo</span></div>
+                    <div className="text-[10px] font-semibold text-charcoal/40 uppercase tracking-wider mb-1">Monthly Burn Rate</div>
+                    <div className="text-lg font-bold text-navy">{fmtFull(burnRate)}<span className="text-xs font-normal text-charcoal/40">/mo</span></div>
                     <div className="text-[10px] text-charcoal/50 mt-1">COGS + OpEx combined</div>
                 </div>
                 <div className="p-4 rounded-xl bg-white border border-light-gray/50 shadow-sm">
@@ -351,14 +430,14 @@ function ProfitAndLoss({ activeMRR, dealsLoading }: { activeMRR: number; dealsLo
                     <div className={`text-lg font-bold ${grossMargin >= 50 ? 'text-teal' : grossMargin >= 0 ? 'text-navy' : 'text-status-blocked'}`}>
                         {grossMargin.toFixed(1)}%
                     </div>
-                    <div className="text-[10px] text-charcoal/50 mt-1">After COGS</div>
+                    <div className="text-[10px] text-charcoal/50 mt-1">FY average after COGS</div>
                 </div>
                 <div className="p-4 rounded-xl bg-white border border-light-gray/50 shadow-sm">
                     <div className="text-[10px] font-semibold text-charcoal/40 uppercase tracking-wider mb-1">Net Margin</div>
                     <div className={`text-lg font-bold ${netMargin >= 0 ? 'text-teal' : 'text-status-blocked'}`}>
                         {netMargin.toFixed(1)}%
                     </div>
-                    <div className="text-[10px] text-charcoal/50 mt-1">Bottom line</div>
+                    <div className="text-[10px] text-charcoal/50 mt-1">FY bottom line</div>
                 </div>
             </div>
         </div>
