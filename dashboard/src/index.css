@@ -1,0 +1,140 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+/* ============================================================
+   RiteHire Agentic OS — Design Tokens
+   Source: BRAND_KIT.md
+   ============================================================ */
+
+@theme {
+  /* Brand Colors */
+  --color-navy: #1a2332;
+  --color-navy-light: #243044;
+  --color-navy-lighter: #2d3b50;
+  --color-charcoal: #4a5568;
+  --color-teal: #009886;
+  --color-teal-light: #00b89c;
+  --color-teal-dark: #007a6c;
+  --color-light-gray: #e5e7eb;
+  --color-surface: #f9fafb;
+  --color-white: #ffffff;
+
+  /* Status Colors */
+  --color-status-active: #009886;
+  --color-status-pending: #f59e0b;
+  --color-status-blocked: #ef4444;
+  --color-status-paused: #9ca3af;
+
+  /* Shadows */
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.12);
+  --shadow-sm: 0 1px 8px rgba(0, 0, 0, 0.08);
+  --shadow-drawer: -4px 0 32px rgba(0, 0, 0, 0.16);
+
+  /* Border Radius */
+  --radius-card: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 9999px;
+
+  /* Font */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* ============================================================
+   Base Styles
+   ============================================================ */
+html {
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--color-surface);
+  color: var(--color-navy);
+  line-height: 1.6;
+}
+
+/* ============================================================
+   Scrollbar Styling
+   ============================================================ */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-light-gray);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-charcoal);
+}
+
+/* ============================================================
+   Skeleton Animation
+   ============================================================ */
+@keyframes skeleton-pulse {
+
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.skeleton {
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+  background: var(--color-light-gray);
+  border-radius: var(--radius-card);
+}
+
+/* ============================================================
+   Utility Classes
+   ============================================================ */
+.card {
+  background: var(--color-white);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: 24px;
+}
+
+.card-sm {
+  background: var(--color-white);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-sm);
+  padding: 16px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.status-dot--teal {
+  background: var(--color-status-active);
+}
+
+.status-dot--amber {
+  background: var(--color-status-pending);
+}
+
+.status-dot--red {
+  background: var(--color-status-blocked);
+}
+
+.status-dot--gray {
+  background: var(--color-status-paused);
+}
