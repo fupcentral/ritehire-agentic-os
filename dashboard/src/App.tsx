@@ -7,6 +7,7 @@ import Finance from './pages/Finance'
 import Infra from './pages/Infra'
 import HR from './pages/HR'
 import TaskBoard from './pages/TaskBoard'
+import ClaudeChatPage from './pages/ClaudeChat'
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
           <Route path="/infra" element={<Infra />} />
           <Route path="/hr" element={<HR />} />
           <Route path="/tasks" element={<TaskBoard />} />
+          <Route path="/claude" element={<ClaudeChatPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

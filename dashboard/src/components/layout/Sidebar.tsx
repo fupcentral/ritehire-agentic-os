@@ -7,11 +7,13 @@ import {
     Server,
     Users,
     ListTodo,
+    Bot,
 } from 'lucide-react'
 
 const navItems = [
     { to: '/', icon: LayoutDashboard, label: 'Command Centre' },
     { to: '/tasks', icon: ListTodo, label: 'Task Board' },
+    { to: '/claude', icon: Bot, label: 'Claude Co-worker' },
     { to: '/sales', icon: TrendingUp, label: 'Sales' },
     { to: '/marketing', icon: Megaphone, label: 'Marketing' },
     { to: '/finance', icon: DollarSign, label: 'Finance' },

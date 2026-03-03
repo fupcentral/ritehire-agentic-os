@@ -10,6 +10,7 @@ import Button from '../components/ui/Button'
 import { useActivityLog } from '../hooks/useActivityLog'
 import DepartmentTasks from '../components/ui/DepartmentTasks'
 import DepartmentTools from '../components/ui/DepartmentTools'
+import ApprovalQueue from '../components/ui/ApprovalQueue'
 import type { ActivityLogEntry } from '../lib/types'
 import {
     Linkedin,
@@ -66,6 +67,9 @@ function LinkedInTab() {
 
     return (
         <div className="space-y-4">
+            {/* Content Approval Queue */}
+            <ApprovalQueue platform="linkedin" title="🔔 LinkedIn Posts — Pending Approval" />
+
             {/* Stats */}
             <div className="grid grid-cols-4 gap-4">
                 <StatCard label="Total Posts" value={entries.length} icon={<Linkedin size={18} />} />

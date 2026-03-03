@@ -8,6 +8,7 @@ import StatCard from '../components/ui/StatCard'
 import SkeletonLoader from '../components/ui/SkeletonLoader'
 import EmptyState from '../components/ui/EmptyState'
 import { getStatusColor } from '../lib/types'
+import ApprovalQueue from '../components/ui/ApprovalQueue'
 import {
     AlertTriangle,
     Activity,
@@ -127,6 +128,9 @@ export default function CommandCentre() {
                     icon={<Clock size={20} />}
                 />
             </div>
+
+            {/* Action Center — Pending Approvals */}
+            <ApprovalQueue compact title="⚡ Action Center — Pending Approvals" />
 
             {/* Two-column: Blockers + Pipeline Snapshot */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
