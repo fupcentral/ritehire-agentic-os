@@ -37,25 +37,27 @@ interface PnlSection {
 
 /* ============================================================
    COST CONFIGURATION
-   These are editable monthly costs for the AI agent company.
+   These are editable monthly costs for RiteHire (Pakistan-based EOR).
    In a production app, these would come from a DB table.
    ============================================================ */
 const COGS: PnlLineItem[] = [
-    { label: 'OpenAI / LLM API Costs', monthly: 480, note: '9 agents × ~$53/mo avg' },
-    { label: 'Supabase (Database + Auth)', monthly: 25, note: 'Pro plan' },
-    { label: 'Vercel / Hosting', monthly: 20, note: 'Pro plan' },
-    { label: 'Image Generation (FAL)', monthly: 30, note: 'Brand agent usage' },
+    { label: 'Payroll Processing & Disbursement', monthly: 2800, note: 'Employee salaries, contractor payouts' },
+    { label: 'Employer Contributions (EOBI / SS)', monthly: 1200, note: 'EOBI, provincial social security' },
+    { label: 'Health & Group Insurance', monthly: 600, note: 'Group medical cover for EOR employees' },
+    { label: 'Compliance & Regulatory Filing', monthly: 350, note: 'Tax filings, labor law compliance' },
+    { label: 'Background Checks & Onboarding', monthly: 200, note: 'Verification, document processing' },
 ]
 
 const OPERATING_EXPENSES: PnlLineItem[] = [
-    { label: 'GitHub (Team)', monthly: 44, note: '4 seats × $11' },
-    { label: 'Domain & DNS', monthly: 15, note: 'ritehire.io' },
-    { label: 'Email (Google Workspace)', monthly: 14, note: '2 users' },
-    { label: 'LinkedIn Sales Navigator', monthly: 99, note: 'Outbound prospecting' },
-    { label: 'Analytics & Monitoring', monthly: 0, note: 'Free tier' },
-    { label: 'Notion (Team)', monthly: 10, note: 'Plus plan' },
-    { label: 'Legal & Compliance', monthly: 0, note: 'Internal agent — no external cost' },
-    { label: 'Insurance & Admin', monthly: 0, note: 'TBD' },
+    { label: 'Office / Coworking Space', monthly: 450, note: 'Lahore / Karachi' },
+    { label: 'SaaS & Tooling', monthly: 280, note: 'Supabase, GitHub, Notion, Google Workspace' },
+    { label: 'AI Operations Platform', monthly: 510, note: 'LLM API costs for 9 AI agents' },
+    { label: 'Legal & Advisory', monthly: 300, note: 'Employment law counsel, contract review' },
+    { label: 'Sales & Marketing', monthly: 200, note: 'LinkedIn, outbound campaigns' },
+    { label: 'Banking & Payment Fees', monthly: 150, note: 'Wire transfers, FX conversion' },
+    { label: 'Domains, DNS & Hosting', monthly: 55, note: 'ritehire.io, dashboard hosting' },
+    { label: 'Travel & Client Meetings', monthly: 100, note: 'Domestic travel' },
+    { label: 'Miscellaneous / Admin', monthly: 75, note: 'Office supplies, courier, etc.' },
 ]
 
 /* ============================================================
