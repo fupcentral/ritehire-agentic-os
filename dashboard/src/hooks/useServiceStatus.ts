@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 
 export interface ServiceStatus {
@@ -16,61 +16,87 @@ export function useServiceStatus() {
     ])
     const [lastChecked, setLastChecked] = useState<Date | null>(null)
 
-    useEffect(() => {
-        checkAll()
-        const interval = setInterval(checkAll, 60000) // Re-check every 60s
-        return () => clearInterval(interval)
-    }, [])
-
-    async function checkAll() {
-        const results: ServiceStatus[] = []
-
-        // 1. Supabase — ping agents table
+    const checkSupabase = useCallback(async (): Promise<ServiceStatus> => {
         try {
             const start = performance.now()
-            const { error } = await supabase
-                .from('agents')
-                .select('id')
-                .limit(1)
+            const { error } = await supabase.from('agents').select('id').limit(1)
             const latency = Math.round(performance.now() - start)
-            results.push({
+            return {
                 name: 'Supabase',
                 status: error ? 'error' : 'connected',
                 latency,
                 detail: error ? error.message : `${latency}ms`,
-            })
+            }
         } catch {
-            results.push({ name: 'Supabase', status: 'error', detail: 'Unreachable' })
+            return { name: 'Supabase', status: 'error', detail: 'Unreachable' }
         }
+    }, [])
 
-        // 2. GitHub — check if repo URL is reachable  
+    const checkGitHub = useCallback(async (): Promise<ServiceStatus> => {
         try {
             const start = performance.now()
-            const resp = await fetch('https://api.github.com/repos/fupcentral/ritehire-agentic-os', {
-                method: 'HEAD',
+            // Fetch GitHub's favicon — lightweight, no auth, no CORS issues
+            await fetch('https://github.githubassets.com/favicons/favicon.svg', {
+                mode: 'no-cors',
                 signal: AbortSignal.timeout(5000),
             })
             const latency = Math.round(performance.now() - start)
-            results.push({
+            // no-cors returns opaque response (status 0) but if it doesn't throw, it's reachable
+            return {
                 name: 'GitHub',
-                status: resp.ok ? 'connected' : 'error',
+                status: 'connected',
                 latency,
-                detail: resp.ok ? `${latency}ms` : `HTTP ${resp.status}`,
-            })
+                detail: `${latency}ms`,
+            }
         } catch {
-            results.push({ name: 'GitHub', status: 'error', detail: 'Unreachable' })
+            return { name: 'GitHub', status: 'error', detail: 'Unreachable' }
         }
+    }, [])
 
-        // 3. Vite Dev Server — always connected if we're running
-        results.push({
+    const checkVite = useCallback(async (): Promise<ServiceStatus> => {
+        // If we're rendering, Vite is alive
+        return {
             name: 'Vite Dev Server',
             status: 'connected',
             detail: 'localhost:5173',
-        })
+        }
+    }, [])
 
-        setServices(results)
-        setLastChecked(new Date())
+    const checkers: Record<string, () => Promise<ServiceStatus>> = {
+        Supabase: checkSupabase,
+        GitHub: checkGitHub,
+        'Vite Dev Server': checkVite,
     }
 
-    return { services, lastChecked, refetch: checkAll }
+    // Check a single service and update state
+    const recheckService = useCallback(async (serviceName: string) => {
+        // Set that service to 'checking'
+        setServices((prev) =>
+            prev.map((s) => (s.name === serviceName ? { ...s, status: 'checking' as const } : s))
+        )
+
+        const checker = checkers[serviceName]
+        if (!checker) return
+
+        const result = await checker()
+        setServices((prev) => prev.map((s) => (s.name === serviceName ? result : s)))
+        setLastChecked(new Date())
+    }, [checkSupabase, checkGitHub, checkVite])
+
+    // Check all services
+    const checkAll = useCallback(async () => {
+        setServices((prev) => prev.map((s) => ({ ...s, status: 'checking' as const })))
+
+        const results = await Promise.all([checkSupabase(), checkGitHub(), checkVite()])
+        setServices(results)
+        setLastChecked(new Date())
+    }, [checkSupabase, checkGitHub, checkVite])
+
+    useEffect(() => {
+        checkAll()
+        const interval = setInterval(checkAll, 60000)
+        return () => clearInterval(interval)
+    }, [checkAll])
+
+    return { services, lastChecked, refetch: checkAll, recheckService }
 }

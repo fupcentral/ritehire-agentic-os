@@ -10,6 +10,7 @@ import {
     ChevronDown,
     ChevronUp,
     RefreshCw,
+    RotateCw,
 } from 'lucide-react'
 
 const serviceIcons: Record<string, typeof Database> = {
@@ -28,24 +29,25 @@ function StatusDot({ status }: { status: ServiceStatus['status'] }) {
 }
 
 export default function MCPStatusBanner() {
-    const { services, lastChecked, refetch } = useServiceStatus()
+    const { services, lastChecked, refetch, recheckService } = useServiceStatus()
     const [expanded, setExpanded] = useState(false)
+    const [reconnecting, setReconnecting] = useState<string | null>(null)
 
     const allConnected = services.every((s) => s.status === 'connected')
     const anyError = services.some((s) => s.status === 'error')
     const anyChecking = services.some((s) => s.status === 'checking')
-
-    const overallStatus = anyChecking
-        ? 'checking'
-        : anyError
-            ? 'error'
-            : 'connected'
 
     const overallLabel = anyChecking
         ? 'Checking services...'
         : allConnected
             ? `${services.length} services connected`
             : `${services.filter((s) => s.status === 'error').length} service(s) down`
+
+    const handleReconnect = async (serviceName: string) => {
+        setReconnecting(serviceName)
+        await recheckService(serviceName)
+        setReconnecting(null)
+    }
 
     return (
         <div className="mx-6 mt-4 mb-2">
@@ -100,7 +102,7 @@ export default function MCPStatusBanner() {
                         <button
                             onClick={(e) => { e.stopPropagation(); refetch() }}
                             className="text-charcoal hover:text-teal transition-colors p-1 rounded-md hover:bg-surface cursor-pointer"
-                            title="Refresh status"
+                            title="Refresh all"
                         >
                             <RefreshCw size={12} />
                         </button>
@@ -108,6 +110,8 @@ export default function MCPStatusBanner() {
                     <div className="divide-y divide-light-gray/30">
                         {services.map((service) => {
                             const Icon = serviceIcons[service.name] || Server
+                            const isReconnecting = reconnecting === service.name || service.status === 'checking'
+
                             return (
                                 <div key={service.name} className="flex items-center justify-between px-4 py-3">
                                     <div className="flex items-center gap-3">
@@ -126,14 +130,35 @@ export default function MCPStatusBanner() {
                                             <span className="text-sm font-medium text-navy block">
                                                 {service.name}
                                             </span>
-                                            {service.detail && (
-                                                <span className="text-[10px] text-charcoal">
-                                                    {service.detail}
-                                                </span>
-                                            )}
+                                            <span className="text-[10px] text-charcoal">
+                                                {isReconnecting ? 'Reconnecting...' : service.detail || '—'}
+                                            </span>
                                         </div>
                                     </div>
-                                    <StatusDot status={service.status} />
+                                    <div className="flex items-center gap-2">
+                                        {/* Reconnect button — shown when service is down OR checking */}
+                                        {service.status === 'error' && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    handleReconnect(service.name)
+                                                }}
+                                                disabled={isReconnecting}
+                                                className={`
+                                                    flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold
+                                                    transition-all cursor-pointer
+                                                    ${isReconnecting
+                                                        ? 'bg-amber-50 text-status-pending'
+                                                        : 'bg-red-50 text-status-blocked hover:bg-red-100 active:scale-95'
+                                                    }
+                                                `}
+                                            >
+                                                <RotateCw size={11} className={isReconnecting ? 'animate-spin' : ''} />
+                                                {isReconnecting ? 'Retrying…' : 'Reconnect'}
+                                            </button>
+                                        )}
+                                        <StatusDot status={service.status} />
+                                    </div>
                                 </div>
                             )
                         })}
