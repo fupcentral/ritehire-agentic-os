@@ -6,6 +6,7 @@ import Marketing from './pages/Marketing'
 import Finance from './pages/Finance'
 import Infra from './pages/Infra'
 import HR from './pages/HR'
+import TaskBoard from './pages/TaskBoard'
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
           <Route path="/finance" element={<Finance />} />
           <Route path="/infra" element={<Infra />} />
           <Route path="/hr" element={<HR />} />
+          <Route path="/tasks" element={<TaskBoard />} />
         </Route>
       </Routes>
     </BrowserRouter>

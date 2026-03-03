@@ -6,10 +6,12 @@ import {
     DollarSign,
     Server,
     Users,
+    ListTodo,
 } from 'lucide-react'
 
 const navItems = [
     { to: '/', icon: LayoutDashboard, label: 'Command Centre' },
+    { to: '/tasks', icon: ListTodo, label: 'Task Board' },
     { to: '/sales', icon: TrendingUp, label: 'Sales' },
     { to: '/marketing', icon: Megaphone, label: 'Marketing' },
     { to: '/finance', icon: DollarSign, label: 'Finance' },
