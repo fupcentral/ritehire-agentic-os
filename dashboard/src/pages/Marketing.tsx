@@ -9,6 +9,7 @@ import Drawer from '../components/ui/Drawer'
 import Button from '../components/ui/Button'
 import { useActivityLog } from '../hooks/useActivityLog'
 import DepartmentTasks from '../components/ui/DepartmentTasks'
+import DepartmentTools from '../components/ui/DepartmentTools'
 import type { ActivityLogEntry } from '../lib/types'
 import {
     Linkedin,
@@ -34,6 +35,7 @@ export default function Marketing() {
                     { key: 'linkedin', label: 'LinkedIn' },
                     { key: 'email-sequences', label: 'Email Sequences' },
                     { key: 'brand', label: 'Brand' },
+                    { key: 'tools', label: 'Tools' },
                     { key: 'tasks', label: 'Tasks' },
                 ]}
                 activeTab={activeTab}
@@ -44,6 +46,7 @@ export default function Marketing() {
                 {activeTab === 'linkedin' && <LinkedInTab />}
                 {activeTab === 'email-sequences' && <EmailSequencesTab />}
                 {activeTab === 'brand' && <BrandTab />}
+                {activeTab === 'tools' && <DepartmentTools department="marketing" />}
                 {activeTab === 'tasks' && <DepartmentTasks agentNames={['LinkedIn', 'Email', 'Brand']} title="Marketing Tasks" />}
             </div>
         </div>

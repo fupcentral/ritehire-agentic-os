@@ -12,6 +12,7 @@ import { useDeals } from '../hooks/useDeals'
 import { useContacts } from '../hooks/useContacts'
 import { useActivityLog } from '../hooks/useActivityLog'
 import DepartmentTasks from '../components/ui/DepartmentTasks'
+import DepartmentTools from '../components/ui/DepartmentTools'
 import { DEAL_STAGES, DEAL_STAGE_LABELS, OUTREACH_STATUSES, formatStatus } from '../lib/types'
 import type { Deal, Contact } from '../lib/types'
 import {
@@ -39,6 +40,7 @@ export default function Sales() {
                     { key: 'pipeline', label: 'Pipeline' },
                     { key: 'contacts', label: 'Contacts' },
                     { key: 'outreach', label: 'Outreach' },
+                    { key: 'tools', label: 'Tools' },
                     { key: 'tasks', label: 'Tasks' },
                 ]}
                 activeTab={activeTab}
@@ -49,6 +51,7 @@ export default function Sales() {
                 {activeTab === 'pipeline' && <PipelineTab />}
                 {activeTab === 'contacts' && <ContactsTab />}
                 {activeTab === 'outreach' && <OutreachTab />}
+                {activeTab === 'tools' && <DepartmentTools department="sales" />}
                 {activeTab === 'tasks' && <DepartmentTasks agentNames={['CRO']} title="Sales Tasks" />}
             </div>
         </div>

@@ -9,6 +9,13 @@ import { useDeals } from '../hooks/useDeals'
 import { useActivityLog } from '../hooks/useActivityLog'
 import DepartmentTasks from '../components/ui/DepartmentTasks'
 import {
+    getTotalSpend,
+    getDepartmentSpend,
+    DEPARTMENT_LABELS,
+    TOTAL_BUDGET,
+} from '../lib/department-tools'
+import type { DepartmentId } from '../lib/department-tools'
+import {
     DollarSign,
     TrendingUp,
     Activity,
@@ -40,12 +47,12 @@ const COGS: PnlLineItem[] = [
 
 const OPERATING_EXPENSES: PnlLineItem[] = [
     { label: 'Office / Coworking Space', monthly: 450, note: 'Lahore / Karachi' },
-    { label: 'SaaS & Tooling', monthly: 280, note: 'Supabase, GitHub, Notion, Google Workspace' },
-    { label: 'AI Operations Platform', monthly: 510, note: 'LLM API costs for 9 AI agents' },
+    { label: 'Dept Tools & SaaS (Budget: $' + TOTAL_BUDGET + ')', monthly: Math.round(getTotalSpend() * 100) / 100, note: 'From department tool allocations' },
+    ...(['sales', 'marketing', 'infra'] as DepartmentId[]).map((dept) => ({
+        label: `  └ ${DEPARTMENT_LABELS[dept]} Tools`, monthly: Math.round(getDepartmentSpend(dept) * 100) / 100, note: `${dept} allocated share`,
+    })),
     { label: 'Legal & Advisory', monthly: 300, note: 'Employment law counsel, contract review' },
-    { label: 'Sales & Marketing', monthly: 200, note: 'LinkedIn, outbound campaigns' },
     { label: 'Banking & Payment Fees', monthly: 150, note: 'Wire transfers, FX conversion' },
-    { label: 'Domains, DNS & Hosting', monthly: 55, note: 'ritehire.io, dashboard hosting' },
     { label: 'Travel & Client Meetings', monthly: 100, note: 'Domestic travel' },
     { label: 'Miscellaneous / Admin', monthly: 75, note: 'Office supplies, courier, etc.' },
 ]

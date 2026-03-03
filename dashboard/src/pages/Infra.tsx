@@ -12,6 +12,7 @@ import { useSkills } from '../hooks/useSkills'
 import { useTasks } from '../hooks/useTasks'
 import { getStatusColor } from '../lib/types'
 import DepartmentTasks from '../components/ui/DepartmentTasks'
+import DepartmentTools from '../components/ui/DepartmentTools'
 import type { Agent, ActivityLogEntry } from '../lib/types'
 import {
     Bot,
@@ -45,6 +46,7 @@ export default function Infra() {
                     { key: 'agents', label: 'Agents' },
                     { key: 'activity', label: 'Activity Log' },
                     { key: 'skills', label: 'Skills' },
+                    { key: 'tools', label: 'Tools' },
                     { key: 'tasks', label: 'Tasks' },
                 ]}
                 activeTab={activeTab}
@@ -55,6 +57,7 @@ export default function Infra() {
                 {activeTab === 'agents' && <AgentsTab />}
                 {activeTab === 'activity' && <ActivityLogTab />}
                 {activeTab === 'skills' && <SkillsTab />}
+                {activeTab === 'tools' && <DepartmentTools department="infra" />}
                 {activeTab === 'tasks' && <DepartmentTasks agentNames={['CEO', 'CDO', 'CRO', 'CFO', 'LinkedIn', 'Email', 'Brand', 'Legal', 'Admin']} title="All Agent Tasks" />}
             </div>
         </div>
