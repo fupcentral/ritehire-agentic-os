@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Epic } from '../lib/types'
 
@@ -7,26 +7,28 @@ export function useEpics() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
-    const fetch = useCallback(async () => {
-        setLoading(true)
-        setError(null)
-
-        const { data, error: err } = await supabase
-            .from('epics')
-            .select('*')
-            .order('created_at', { ascending: false })
-
-        if (err) {
-            setError(err.message)
-            setLoading(false)
-            return
-        }
-
-        setEpics(data || [])
-        setLoading(false)
+    useEffect(() => {
+        fetchEpics()
     }, [])
 
-    useEffect(() => { fetch() }, [fetch])
+    async function fetchEpics() {
+        setLoading(true)
+        setError(null)
+        try {
+            const { data, error: err } = await supabase
+                .from('epics')
+                .select('*')
+                .order('created_at', { ascending: false })
 
-    return { epics, loading, error, refetch: fetch }
+            if (err) throw err
+            setEpics((data as Epic[]) || [])
+        } catch (e: any) {
+            setError(e.message || 'Failed to fetch epics')
+            console.error('[useEpics]', e)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    return { epics, loading, error, refetch: fetchEpics }
 }

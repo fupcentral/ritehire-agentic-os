@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Agent, Skill } from '../lib/types'
 
@@ -7,42 +7,48 @@ export function useAgents() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
-    const fetch = useCallback(async () => {
-        setLoading(true)
-        setError(null)
-
-        const { data: agentsData, error: agentsErr } = await supabase
-            .from('agents')
-            .select('*')
-            .order('created_at')
-
-        if (agentsErr) {
-            setError(agentsErr.message)
-            setLoading(false)
-            return
-        }
-
-        const { data: skillsData } = await supabase
-            .from('skills')
-            .select('*')
-            .order('name')
-
-        const skillsByAgent = (skillsData || []).reduce<Record<string, Skill[]>>((acc, skill) => {
-            if (!acc[skill.agent_id]) acc[skill.agent_id] = []
-            acc[skill.agent_id].push(skill)
-            return acc
-        }, {})
-
-        const agentsWithSkills = (agentsData || []).map((agent) => ({
-            ...agent,
-            skills: skillsByAgent[agent.id] || [],
-        }))
-
-        setAgents(agentsWithSkills)
-        setLoading(false)
+    useEffect(() => {
+        fetchAgents()
     }, [])
 
-    useEffect(() => { fetch() }, [fetch])
+    async function fetchAgents() {
+        setLoading(true)
+        setError(null)
+        try {
+            const { data, error: err } = await supabase
+                .from('agents')
+                .select('*, skills(*)')
+                .order('created_at', { ascending: true })
 
-    return { agents, loading, error, refetch: fetch }
+            if (err) throw err
+            setAgents((data as Agent[]) || [])
+        } catch (e: any) {
+            setError(e.message || 'Failed to fetch agents')
+            console.error('[useAgents]', e)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    return { agents, loading, error, refetch: fetchAgents }
+}
+
+export function useAgentSkills(agentId: string | null) {
+    const [skills, setSkills] = useState<Skill[]>([])
+    const [loading, setLoading] = useState(false)
+
+    useEffect(() => {
+        if (!agentId) return
+        setLoading(true)
+        supabase
+            .from('skills')
+            .select('*')
+            .eq('agent_id', agentId)
+            .then(({ data }) => {
+                setSkills((data as Skill[]) || [])
+                setLoading(false)
+            })
+    }, [agentId])
+
+    return { skills, loading }
 }

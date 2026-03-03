@@ -1,50 +1,24 @@
 import { NavLink, useLocation } from 'react-router-dom'
-import { useState } from 'react'
 import {
     LayoutDashboard,
-    Activity,
-    Bot,
-    Linkedin,
-    Mail,
-    Kanban,
-    Users,
+    TrendingUp,
+    Megaphone,
     DollarSign,
-    ChevronDown,
-    ChevronRight,
+    Server,
+    Users,
 } from 'lucide-react'
 
-const navSections = [
-    {
-        label: 'AGENTS',
-        items: [
-            { to: '/', icon: LayoutDashboard, label: 'Executive' },
-            { to: '/activity', icon: Activity, label: 'Actions' },
-            { to: '/agents', icon: Bot, label: 'Agents' },
-        ],
-    },
-    {
-        label: 'GTM',
-        expandable: true,
-        items: [
-            { to: '/gtm/linkedin', icon: Linkedin, label: 'LinkedIn' },
-            { to: '/gtm/email', icon: Mail, label: 'Email' },
-        ],
-    },
-    {
-        label: null,
-        items: [
-            { to: '/pipeline', icon: Kanban, label: 'Pipeline' },
-            { to: '/contacts', icon: Users, label: 'Contacts' },
-            { to: '/finance', icon: DollarSign, label: 'Finance' },
-        ],
-    },
+const navItems = [
+    { to: '/', icon: LayoutDashboard, label: 'Command Centre' },
+    { to: '/sales', icon: TrendingUp, label: 'Sales' },
+    { to: '/marketing', icon: Megaphone, label: 'Marketing' },
+    { to: '/finance', icon: DollarSign, label: 'Finance' },
+    { to: '/infra', icon: Server, label: 'Infrastructure' },
+    { to: '/hr', icon: Users, label: 'HR & Compliance' },
 ]
 
 export default function Sidebar() {
     const location = useLocation()
-    const [gtmOpen, setGtmOpen] = useState(
-        location.pathname.startsWith('/gtm')
-    )
 
     return (
         <aside className="w-[240px] h-screen bg-navy flex flex-col flex-shrink-0 overflow-y-auto">
@@ -61,54 +35,36 @@ export default function Sidebar() {
                 </div>
             </div>
 
+            {/* Department label */}
+            <div className="px-5 pb-2">
+                <div className="text-[10px] font-semibold tracking-[0.15em] text-charcoal uppercase">
+                    Departments
+                </div>
+            </div>
+
             {/* Navigation */}
-            <nav className="flex-1 px-3 pb-6 space-y-1">
-                {navSections.map((section, sIdx) => (
-                    <div key={sIdx} className="mb-2">
-                        {/* Section label */}
-                        {section.label && !section.expandable && (
-                            <div className="px-3 py-2 text-[10px] font-semibold tracking-[0.15em] text-charcoal uppercase">
-                                {section.label}
-                            </div>
-                        )}
+            <nav className="flex-1 px-3 pb-6 space-y-0.5">
+                {navItems.map((item) => {
+                    const isActive =
+                        item.to === '/'
+                            ? location.pathname === '/'
+                            : location.pathname.startsWith(item.to)
 
-                        {/* Expandable GTM header */}
-                        {section.label && section.expandable && (
-                            <button
-                                onClick={() => setGtmOpen(!gtmOpen)}
-                                className="w-full flex items-center justify-between px-3 py-2 text-[10px] font-semibold
-                  tracking-[0.15em] text-charcoal uppercase hover:text-white/60 transition-colors cursor-pointer"
-                            >
-                                <span>{section.label}</span>
-                                {gtmOpen ? (
-                                    <ChevronDown size={12} />
-                                ) : (
-                                    <ChevronRight size={12} />
-                                )}
-                            </button>
-                        )}
-
-                        {/* Items (conditionally hidden for GTM) */}
-                        {(!section.expandable || gtmOpen) &&
-                            section.items.map((item) => (
-                                <NavLink
-                                    key={item.to}
-                                    to={item.to}
-                                    end={item.to === '/'}
-                                    className={({ isActive }) =>
-                                        `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150
-                    ${isActive
-                                            ? 'bg-white/10 text-white border-l-2 border-teal ml-0 pl-[10px]'
-                                            : 'text-white/50 hover:text-white hover:bg-white/5'
-                                        }`
-                                    }
-                                >
-                                    <item.icon size={18} />
-                                    <span>{item.label}</span>
-                                </NavLink>
-                            ))}
-                    </div>
-                ))}
+                    return (
+                        <NavLink
+                            key={item.to}
+                            to={item.to}
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150
+                ${isActive
+                                    ? 'bg-white/10 text-white border-l-2 border-teal pl-[10px]'
+                                    : 'text-white/50 hover:text-white hover:bg-white/5'
+                                }`}
+                        >
+                            <item.icon size={18} />
+                            <span>{item.label}</span>
+                        </NavLink>
+                    )
+                })}
             </nav>
 
             {/* Footer */}

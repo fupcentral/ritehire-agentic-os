@@ -1,27 +1,23 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import AppShell from './components/layout/AppShell'
-import ExecutiveDashboard from './pages/ExecutiveDashboard'
-import LinkedInEngine from './pages/LinkedInEngine'
-import EmailOutreach from './pages/EmailOutreach'
-import Contacts from './pages/Contacts'
-import Pipeline from './pages/Pipeline'
-import Agents from './pages/Agents'
-import ActivityLog from './pages/ActivityLog'
+import CommandCentre from './pages/CommandCentre'
+import Sales from './pages/Sales'
+import Marketing from './pages/Marketing'
 import Finance from './pages/Finance'
+import Infra from './pages/Infra'
+import HR from './pages/HR'
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route element={<AppShell />}>
-          <Route path="/" element={<ExecutiveDashboard />} />
-          <Route path="/gtm/linkedin" element={<LinkedInEngine />} />
-          <Route path="/gtm/email" element={<EmailOutreach />} />
-          <Route path="/contacts" element={<Contacts />} />
-          <Route path="/pipeline" element={<Pipeline />} />
-          <Route path="/agents" element={<Agents />} />
-          <Route path="/activity" element={<ActivityLog />} />
+          <Route path="/" element={<CommandCentre />} />
+          <Route path="/sales" element={<Sales />} />
+          <Route path="/marketing" element={<Marketing />} />
           <Route path="/finance" element={<Finance />} />
+          <Route path="/infra" element={<Infra />} />
+          <Route path="/hr" element={<HR />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -1,7 +1,6 @@
 // ============================================================
 // RiteHire Agentic OS — TypeScript Interfaces
-// Updated to match ACTUAL Supabase table schemas
-// (differs from schema.sql — Antigravity created tables with different constraints)
+// Corrected to match LIVE Supabase DB (not schema.sql)
 // ============================================================
 
 export interface Agent {
@@ -15,13 +14,11 @@ export interface Agent {
     prompt_path: string | null
     created_at: string
     updated_at: string
-    // Joined
     skills?: Skill[]
 }
 
 export interface Skill {
-    // Actual DB uses 'id' (UUID), not 'skill_id'
-    id: string
+    id: string // PK is 'id' (UUID), NOT 'skill_id'
     name: string
     agent_id: string
     github_path: string
@@ -31,6 +28,7 @@ export interface Skill {
     run_count: number
     created_at: string
     updated_at: string
+    agent?: Agent
 }
 
 export interface Task {
@@ -40,16 +38,13 @@ export interface Task {
     agent_id: string | null
     epic_id: string | null
     skill_id: string | null
-    // Actual DB constraint: 'todo' | 'in_progress' | 'blocked' | 'done' | 'cancelled'
     status: 'todo' | 'in_progress' | 'blocked' | 'done' | 'cancelled'
-    blocker_path: string | null
-    // Actual DB constraint: 'P0 - Critical' | 'P1 - High' | 'P2 - Medium' | 'P3 - Low'
+    blocker_path: string | null // maps to blocker_notes in UI
     priority: 'P0 - Critical' | 'P1 - High' | 'P2 - Medium' | 'P3 - Low'
     due_date: string | null
     completed_at: string | null
     created_at: string
     updated_at: string
-    // Joined
     agent?: Agent
 }
 
@@ -59,7 +54,6 @@ export interface Epic {
     description: string | null
     owner_agent: string | null
     completion_pct: number
-    // Actual DB constraint: 'active' | 'completed' | 'blocked' | 'backlog'
     status: 'active' | 'completed' | 'blocked' | 'backlog'
     target_date: string | null
     completed_at: string | null
@@ -71,7 +65,6 @@ export interface Deal {
     id: string
     company: string
     contact_id: string | null
-    // Actual DB constraint values
     stage:
     | 'prospecting'
     | 'contacted'
@@ -86,8 +79,27 @@ export interface Deal {
     notes: string | null
     created_at: string
     updated_at: string
-    // Joined
     contact?: Contact
+}
+
+export const DEAL_STAGES: Deal['stage'][] = [
+    'prospecting',
+    'contacted',
+    'discovery',
+    'proposal',
+    'negotiation',
+    'closed_won',
+    'closed_lost',
+]
+
+export const DEAL_STAGE_LABELS: Record<Deal['stage'], string> = {
+    prospecting: 'Prospecting',
+    contacted: 'Contacted',
+    discovery: 'Discovery',
+    proposal: 'Proposal',
+    negotiation: 'Negotiation',
+    closed_won: 'Closed Won',
+    closed_lost: 'Closed Lost',
 }
 
 export interface Contact {
@@ -98,7 +110,6 @@ export interface Contact {
     linkedin_url: string | null
     email: string | null
     phone: string | null
-    // Actual DB constraint values
     outreach_status:
     | 'not_contacted'
     | 'contacted'
@@ -111,32 +122,35 @@ export interface Contact {
     updated_at: string
 }
 
+export const OUTREACH_STATUSES: Contact['outreach_status'][] = [
+    'not_contacted',
+    'contacted',
+    'replied',
+    'meeting_booked',
+    'disqualified',
+]
+
 export interface ActivityLogEntry {
     id: string
     agent_id: string | null
-    skill_used: string | null
-    // action_type may not exist in actual DB — kept optional for safety
-    action_type?: string | null
+    skill_used: string | null // use this, NOT action_type
     output_summary: string
-    // Actual DB constraint: 'success' | 'failed' | 'in_progress' | 'pending'
     status: 'success' | 'failed' | 'in_progress' | 'pending'
     risk_level: 'low' | 'medium' | 'high' | 'critical' | null
     related_deal_id: string | null
     related_contact_id: string | null
     related_task_id: string | null
     created_at: string
-    // Joined via agent_id FK (from useActivityLog select '*, agent:agents(*)')
-    agent?: Agent
+    agent?: Agent // from select('*, agent:agents(*)')
 }
 
 // ============================================================
-// Status color mapping helper type
+// Status color mapping
 // ============================================================
 export type StatusColor = 'teal' | 'amber' | 'red' | 'gray'
 
 export function getStatusColor(status: string): StatusColor {
     switch (status) {
-        // Green / success states
         case 'active':
         case 'completed':
         case 'done':
@@ -144,9 +158,9 @@ export function getStatusColor(status: string): StatusColor {
         case 'closed_won':
         case 'replied':
         case 'meeting_booked':
+        case 'approved':
             return 'teal'
 
-        // Amber / in-progress states
         case 'in_progress':
         case 'pending':
         case 'todo':
@@ -159,7 +173,6 @@ export function getStatusColor(status: string): StatusColor {
         case 'backlog':
             return 'amber'
 
-        // Red / blocked / failed states
         case 'blocked':
         case 'failed':
         case 'closed_lost':
@@ -167,16 +180,22 @@ export function getStatusColor(status: string): StatusColor {
         case 'P0 - Critical':
             return 'red'
 
-        // Gray / neutral / archived states
         case 'paused':
         case 'archived':
         case 'cancelled':
-        case 'P1 - High':
-        case 'P2 - Medium':
-        case 'P3 - Low':
             return 'gray'
 
         default:
             return 'gray'
     }
+}
+
+export function formatStatus(status: string): string {
+    return status
+        .replace(/_/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+export function formatPriority(priority: string): string {
+    return priority // Already formatted like 'P0 - Critical'
 }

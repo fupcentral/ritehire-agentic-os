@@ -1,62 +1,56 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import type { ActivityLogEntry } from '../lib/types'
 
 interface UseActivityLogOptions {
-    agentFilter?: string
-    actionTypeFilter?: string
-    statusFilter?: string
-    riskFilter?: string
+    agentId?: string | string[]
+    status?: string
     limit?: number
-    page?: number
 }
 
-export function useActivityLog(options?: UseActivityLogOptions) {
+export function useActivityLog(options: UseActivityLogOptions = {}) {
     const [entries, setEntries] = useState<ActivityLogEntry[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
-    const [totalCount, setTotalCount] = useState(0)
 
-    const limit = options?.limit || 50
-    const page = options?.page || 0
+    useEffect(() => {
+        fetchEntries()
+    }, [
+        typeof options.agentId === 'string' ? options.agentId : options.agentId?.join(','),
+        options.status,
+        options.limit,
+    ])
 
-    const fetch = useCallback(async () => {
+    async function fetchEntries() {
         setLoading(true)
         setError(null)
+        try {
+            let query = supabase
+                .from('activity_log')
+                .select('*, agent:agents(*)')
+                .order('created_at', { ascending: false })
 
-        let query = supabase
-            .from('activity_log')
-            .select('*, agent:agents(*)', { count: 'exact' })
-            .order('created_at', { ascending: false })
-            .range(page * limit, (page + 1) * limit - 1)
+            if (options.agentId) {
+                if (Array.isArray(options.agentId)) {
+                    query = query.in('agent_id', options.agentId)
+                } else {
+                    query = query.eq('agent_id', options.agentId)
+                }
+            }
+            if (options.status) query = query.eq('status', options.status)
+            if (options.limit) query = query.limit(options.limit)
 
-        if (options?.agentFilter && options.agentFilter !== 'all') {
-            query = query.eq('agent_id', options.agentFilter)
-        }
-        if (options?.actionTypeFilter && options.actionTypeFilter !== 'all') {
-            query = query.eq('action_type', options.actionTypeFilter)
-        }
-        if (options?.statusFilter && options.statusFilter !== 'all') {
-            query = query.eq('status', options.statusFilter)
-        }
-        if (options?.riskFilter && options.riskFilter !== 'all') {
-            query = query.eq('risk_level', options.riskFilter)
-        }
+            const { data, error: err } = await query
 
-        const { data, error: err, count } = await query
-
-        if (err) {
-            setError(err.message)
+            if (err) throw err
+            setEntries((data as ActivityLogEntry[]) || [])
+        } catch (e: any) {
+            setError(e.message || 'Failed to fetch activity log')
+            console.error('[useActivityLog]', e)
+        } finally {
             setLoading(false)
-            return
         }
+    }
 
-        setEntries(data || [])
-        setTotalCount(count || 0)
-        setLoading(false)
-    }, [options?.agentFilter, options?.actionTypeFilter, options?.statusFilter, options?.riskFilter, limit, page])
-
-    useEffect(() => { fetch() }, [fetch])
-
-    return { entries, loading, error, totalCount, refetch: fetch }
+    return { entries, loading, error, refetch: fetchEntries }
 }
