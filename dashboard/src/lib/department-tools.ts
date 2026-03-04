@@ -167,12 +167,22 @@ export const TOOLS: Tool[] = [
 
     // ─── SHARED: SALES + INFRA ───
     {
-        id: 'openai-api',
-        name: 'OpenAI API',
+        id: 'anthropic-api',
+        name: 'Anthropic (Claude)',
         monthlyCost: 30,
         departments: ['sales', 'infra'],
-        url: 'https://platform.openai.com',
-        description: 'AI agent LLM calls for outreach + automation',
+        url: 'https://console.anthropic.com',
+        description: 'Claude Sonnet — AI agent LLM calls, Claude Co-worker chat, outreach automation',
+        category: 'ai',
+        active: true,
+    },
+    {
+        id: 'gemini-api',
+        name: 'Nano Banana Pro (Gemini API)',
+        monthlyCost: 0,
+        departments: ['marketing'],
+        url: 'https://aistudio.google.com',
+        description: 'Nano Banana Pro (Gemini 3 Pro Image) — LinkedIn visual generation, marketing assets. Free tier via AI Studio.',
         category: 'ai',
         active: true,
     },

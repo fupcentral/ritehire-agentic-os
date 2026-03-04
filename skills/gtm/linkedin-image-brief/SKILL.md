@@ -116,9 +116,12 @@ Color profile: sRGB
 
 --- VISUAL AUTOMATION NOTE ---
 Recommended tools (priority order):
-1. Canva API/MCP — template-based, fastest for brand consistency
-2. DALL-E 3 / Midjourney — for custom UI mock illustration
-3. Claude artifact (HTML/CSS card render) — fallback for rapid iteration
+1. Nano Banana Pro (Gemini 3 Pro Image) — PRIMARY. Call the `generate-linkedin-visual` Supabase edge function
+   with this brief. Returns Drive URL. Produces highest-quality brand-locked visuals.
+   Model: gemini-3-pro-image-preview | Requires: GEMINI_API_KEY in Supabase vault
+2. Nano Banana 2 (Gemini 3.1 Flash Image) — FAST ITERATION. Same edge function, pass model: "flash".
+   Use when iterating quickly or Nano Banana Pro quota is exhausted.
+3. Claude artifact (HTML/CSS card render) — FALLBACK for offline/no-API situations only.
 ```
 
 ### Step 4: Apple-design quality check
