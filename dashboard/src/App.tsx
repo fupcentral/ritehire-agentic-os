@@ -8,13 +8,15 @@ import Infra from './pages/Infra'
 import HR from './pages/HR'
 import TaskBoard from './pages/TaskBoard'
 import ClaudeChatPage from './pages/ClaudeChat'
+import OmniUpdate from './pages/OmniUpdate'
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route element={<AppShell />}>
-          <Route path="/" element={<CommandCentre />} />
+          <Route path="/" element={<OmniUpdate />} />
+          <Route path="/command" element={<CommandCentre />} />
           <Route path="/sales" element={<Sales />} />
           <Route path="/marketing" element={<Marketing />} />
           <Route path="/finance" element={<Finance />} />
