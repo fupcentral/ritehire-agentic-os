@@ -51,7 +51,16 @@
 ### 6. Notion Integration
 **Report Location:** `/Users/nabeelsaeed/Documents/YES/ritehire-agentic-os/docs/daily-reports/`
 **Format:** Follow existing template structure
-**Commit:** Always commit and push to git after creating
+**Workflow:**
+1. Create report markdown file in docs/daily-reports/
+2. Commit and push to git
+3. Run: `node scripts/push-to-notion.js docs/daily-reports/YYYY-MM-DD.md`
+4. Report appears in Notion database automatically
+
+**Setup Required (One-Time):**
+- NOTION_API_KEY: Get from https://www.notion.so/my-integrations
+- NOTION_DATABASE_ID: From Notion database URL
+- Share database with integration
 
 ### 7. No Secrets in Code
 **Security Rules:**
