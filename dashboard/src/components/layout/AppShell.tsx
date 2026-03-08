@@ -1,7 +1,6 @@
 import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import TopBar from './TopBar'
-import MCPStatusBanner from '../ui/MCPStatusBanner'
 
 export default function AppShell() {
     return (
@@ -10,8 +9,7 @@ export default function AppShell() {
             <div className="flex-1 flex flex-col overflow-hidden">
                 <TopBar />
                 <main className="flex-1 overflow-y-auto bg-surface">
-                    <MCPStatusBanner />
-                    <div className="px-8 pb-8">
+                    <div className="px-8 py-6">
                         <Outlet />
                     </div>
                 </main>

@@ -1,6 +1,6 @@
 import { useAgents } from '../../hooks/useAgents'
 import { useActivityLog } from '../../hooks/useActivityLog'
-import { Bell, Search } from 'lucide-react'
+import { Bell, Search, Github, HardDrive, BookOpen, Linkedin, CreditCard, CheckCircle2, AlertCircle } from 'lucide-react'
 import { getStatusColor } from '../../lib/types'
 
 const statusColorMap: Record<string, string> = {
@@ -9,6 +9,14 @@ const statusColorMap: Record<string, string> = {
     red: 'bg-status-blocked',
     gray: 'bg-status-paused',
 }
+
+const integrations = [
+    { name: 'GitHub', icon: Github, connected: true },
+    { name: 'Drive', icon: HardDrive, connected: true },
+    { name: 'Notion', icon: BookOpen, connected: true },
+    { name: 'LinkedIn', icon: Linkedin, connected: false },
+    { name: 'Stripe', icon: CreditCard, connected: false },
+]
 
 export default function TopBar() {
     const { agents } = useAgents()
@@ -36,7 +44,6 @@ export default function TopBar() {
                                 <div className="absolute top-7 left-1/2 -translate-x-1/2 bg-navy text-white text-[10px] font-medium px-2.5 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none z-50 shadow-lg">
                                     <div>{agent.name}</div>
                                     <div className="text-white/50 text-[9px] mt-0.5 capitalize">{agent.status}</div>
-                                    {/* Arrow */}
                                     <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-navy rotate-45" />
                                 </div>
                             </div>
@@ -48,6 +55,36 @@ export default function TopBar() {
                         {agents.filter((a) => a.status === 'active').length}/{agents.length} active
                     </span>
                 )}
+
+                {/* Divider */}
+                <div className="w-px h-5 bg-light-gray mx-1" />
+
+                {/* Integration status strip */}
+                <div className="flex items-center gap-2">
+                    {integrations.map((int) => (
+                        <div key={int.name} className="group relative flex items-center">
+                            <div className={`flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium ${int.connected
+                                    ? 'text-teal/80 bg-teal/5'
+                                    : 'text-charcoal/40 bg-charcoal/5'
+                                }`}>
+                                <int.icon size={11} />
+                                <span className="hidden xl:inline">{int.name}</span>
+                            </div>
+                            {/* Tooltip */}
+                            <div className="absolute top-8 left-1/2 -translate-x-1/2 bg-navy text-white text-[10px] font-medium px-2.5 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none z-50 shadow-lg">
+                                <div className="flex items-center gap-1">
+                                    {int.connected ? (
+                                        <CheckCircle2 size={10} className="text-teal-light" />
+                                    ) : (
+                                        <AlertCircle size={10} className="text-amber-300" />
+                                    )}
+                                    {int.connected ? `${int.name} connected` : 'Setup required'}
+                                </div>
+                                <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-navy rotate-45" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
 
             {/* Right side */}

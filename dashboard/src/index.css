@@ -30,6 +30,7 @@
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.03), 0 2px 8px rgba(0, 0, 0, 0.04);
   --shadow-drawer: -4px 0 32px rgba(0, 0, 0, 0.12);
   --shadow-hover: 0 2px 8px rgba(0, 0, 0, 0.06), 0 8px 32px rgba(0, 0, 0, 0.08);
+  --shadow-modal: 0 12px 48px rgba(0, 0, 0, 0.18), 0 2px 8px rgba(0, 0, 0, 0.06);
 
   /* Border Radius */
   --radius-card: 12px;
@@ -99,9 +100,9 @@ body {
   transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
-.card:hover,
-.card-sm:hover {
+.card-interactive:hover {
   box-shadow: var(--shadow-hover);
+  transform: translateY(-1px);
 }
 
 /* ============================================================
@@ -139,15 +140,8 @@ body {
    Skeleton Animation — smoother
    ============================================================ */
 @keyframes skeleton-pulse {
-
-  0%,
-  100% {
-    opacity: 0.3;
-  }
-
-  50% {
-    opacity: 0.7;
-  }
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.7; }
 }
 
 .skeleton {
@@ -161,15 +155,8 @@ body {
    Drawer
    ============================================================ */
 @keyframes drawer-slide-in {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
 }
 
 .drawer-enter {
@@ -177,18 +164,32 @@ body {
 }
 
 /* ============================================================
+   Modal
+   ============================================================ */
+@keyframes modal-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modal-scale-in {
+  from { opacity: 0; transform: scale(0.95) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal-backdrop {
+  animation: modal-fade-in 0.2s ease forwards;
+}
+
+.modal-content {
+  animation: modal-scale-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ============================================================
    Fade In — elegant spring
    ============================================================ */
 @keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .fade-in {
@@ -215,11 +216,37 @@ body {
 }
 
 /* ============================================================
+   Kanban / Pipeline
+   ============================================================ */
+.kanban-column {
+  background: var(--color-surface);
+  border-radius: var(--radius-card);
+  min-height: 200px;
+  padding: 12px;
+}
+
+.kanban-card {
+  background: var(--color-white);
+  border-radius: 10px;
+  padding: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+  cursor: default;
+}
+
+.kanban-card:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-1px);
+}
+
+/* ============================================================
    Table enhancements
    ============================================================ */
 table {
   border-collapse: separate;
   border-spacing: 0;
+  width: 100%;
 }
 
 th {
@@ -227,14 +254,69 @@ th {
   top: 0;
   z-index: 1;
   background: var(--color-white);
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-charcoal);
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--color-light-gray);
+}
+
+td {
+  padding: 12px 16px;
+  font-size: 13px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  vertical-align: middle;
+}
+
+tr:hover td {
+  background: rgba(0, 0, 0, 0.01);
+}
+
+/* ============================================================
+   Form inputs
+   ============================================================ */
+.input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--color-light-gray);
+  border-radius: 10px;
+  font-size: 13px;
+  font-family: var(--font-sans);
+  color: var(--color-navy);
+  background: var(--color-white);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input::placeholder {
+  color: var(--color-charcoal);
+  opacity: 0.5;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-teal);
+  box-shadow: 0 0 0 3px rgba(0, 152, 134, 0.12);
+}
+
+select.input {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%234a5568' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+textarea.input {
+  resize: vertical;
+  min-height: 80px;
 }
 
 /* ============================================================
    Focus states — accessible + beautiful
    ============================================================ */
-input:focus,
-select:focus,
-textarea:focus,
 button:focus-visible {
   outline: none;
   box-shadow: 0 0 0 2px var(--color-teal), 0 0 0 4px rgba(0, 152, 134, 0.15);
@@ -246,4 +328,21 @@ button:focus-visible {
 ::selection {
   background: rgba(0, 152, 134, 0.15);
   color: var(--color-navy);
+}
+
+/* ============================================================
+   Utility: line clamp
+   ============================================================ */
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }

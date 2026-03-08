@@ -1,343 +1,610 @@
-import { useState } from 'react'
-import { useTasks } from '../hooks/useTasks'
-import Card from '../components/ui/Card'
+import { useState, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
+import Card, { CardHeader } from '../components/ui/Card'
 import StatusBadge from '../components/ui/StatusBadge'
+import StatCard from '../components/ui/StatCard'
 import SkeletonLoader from '../components/ui/SkeletonLoader'
 import EmptyState from '../components/ui/EmptyState'
+import { useTasks } from '../hooks/useTasks'
+import { useEpics } from '../hooks/useEpics'
+import { useAgents } from '../hooks/useAgents'
+import type { Task, Epic } from '../lib/types'
 import {
     ListTodo,
-    Filter,
+    CheckCircle2,
+    Clock,
+    AlertTriangle,
+    Search,
+    Target,
     ChevronDown,
     ChevronRight,
-    AlertTriangle,
-    ArrowRight,
-    CalendarDays,
+    User,
+    ExternalLink,
+    TrendingUp,
+    Megaphone,
+    DollarSign,
+    Server,
+    Users,
+    LayoutDashboard,
 } from 'lucide-react'
-import type { Task } from '../lib/types'
 
 /* ============================================================
-   DEPARTMENT MAPPING — Agent role → Department
+   DEPARTMENT MAPPING
    ============================================================ */
-function getDepartment(agent?: { role: string; name: string } | null): string {
-    if (!agent) return 'Unassigned'
-    const role = agent.role.toLowerCase()
-    const name = agent.name.toLowerCase()
-
-    if (name.includes('ceo') || role.includes('executive')) return 'Executive'
-    if (name.includes('cro') || role.includes('revenue')) return 'Sales'
-    if (name.includes('linkedin') || name.includes('email') || name.includes('brand') || role.includes('gtm') || role.includes('brand') || role.includes('content'))
-        return 'Marketing'
-    if (name.includes('cfo') || role.includes('financial') || role.includes('finance'))
-        return 'Finance'
-    if (name.includes('cdo') || role.includes('design')) return 'Infrastructure'
-    if (name.includes('legal') || role.includes('legal') || role.includes('compliance'))
-        return 'HR & Compliance'
-    if (name.includes('admin') || role.includes('operations') || role.includes('ops'))
-        return 'Infrastructure'
-    return 'Other'
+interface Department {
+    key: string
+    label: string
+    route: string
+    icon: typeof LayoutDashboard
+    color: string
+    agentNames: string[]
 }
 
-const DEPARTMENT_ORDER = [
-    'Executive',
-    'Sales',
-    'Marketing',
-    'Finance',
-    'Infrastructure',
-    'HR & Compliance',
-    'Other',
-    'Unassigned',
+const DEPARTMENTS: Department[] = [
+    {
+        key: 'sales',
+        label: 'Sales',
+        route: '/sales',
+        icon: TrendingUp,
+        color: 'text-blue-500 bg-blue-50',
+        agentNames: ['cro', 'chief revenue', 'linkedin outbound', 'email outbound'],
+    },
+    {
+        key: 'marketing',
+        label: 'Marketing',
+        route: '/marketing',
+        icon: Megaphone,
+        color: 'text-purple-500 bg-purple-50',
+        agentNames: ['cdo', 'chief design', 'brand'],
+    },
+    {
+        key: 'finance',
+        label: 'Finance',
+        route: '/finance',
+        icon: DollarSign,
+        color: 'text-amber-500 bg-amber-50',
+        agentNames: ['cfo', 'chief financial'],
+    },
+    {
+        key: 'infra',
+        label: 'Infrastructure',
+        route: '/infra',
+        icon: Server,
+        color: 'text-teal bg-teal/8',
+        agentNames: ['admin', 'ops', 'admin & ops'],
+    },
+    {
+        key: 'hr',
+        label: 'HR & Compliance',
+        route: '/hr',
+        icon: Users,
+        color: 'text-pink-500 bg-pink-50',
+        agentNames: ['legal', 'compliance'],
+    },
 ]
 
-const DEPARTMENT_COLORS: Record<string, string> = {
-    Executive: 'from-violet-500/10 to-violet-500/5 border-violet-500/20',
-    Sales: 'from-blue-500/10 to-blue-500/5 border-blue-500/20',
-    Marketing: 'from-pink-500/10 to-pink-500/5 border-pink-500/20',
-    Finance: 'from-emerald-500/10 to-emerald-500/5 border-emerald-500/20',
-    Infrastructure: 'from-amber-500/10 to-amber-500/5 border-amber-500/20',
-    'HR & Compliance': 'from-cyan-500/10 to-cyan-500/5 border-cyan-500/20',
-    Other: 'from-gray-500/10 to-gray-500/5 border-gray-500/20',
-    Unassigned: 'from-gray-400/10 to-gray-400/5 border-gray-400/20',
-}
-
-const STATUS_FILTERS: Task['status'][] = ['todo', 'in_progress', 'blocked', 'done', 'cancelled']
-
-/* ============================================================
-   NEXT STEP — derive from status / blocker / description
-   ============================================================ */
-function getNextStep(task: Task): string {
-    switch (task.status) {
-        case 'blocked':
-            return task.blocker_path || 'Resolve blocker'
-        case 'todo':
-            return 'Start task'
-        case 'in_progress':
-            return task.description
-                ? task.description.split('.')[0].slice(0, 80) + (task.description.length > 80 ? '…' : '')
-                : 'Continue work'
-        case 'done':
-            return 'Completed'
-        case 'cancelled':
-            return 'Cancelled'
-        default:
-            return '—'
+function getDepartment(task: Task): Department | null {
+    if (!task.agent) return null
+    const name = task.agent.name.toLowerCase()
+    const role = (task.agent.role || '').toLowerCase()
+    for (const dept of DEPARTMENTS) {
+        if (dept.agentNames.some((n) => name.includes(n) || role.includes(n))) {
+            return dept
+        }
     }
+    return null
 }
 
 /* ============================================================
-   COMPONENT
+   PRIORITY ORDER
+   ============================================================ */
+const PRIORITY_ORDER: Record<string, number> = {
+    'P0 - Critical': 0,
+    'P1 - High': 1,
+    'P2 - Medium': 2,
+    'P3 - Low': 3,
+}
+const STATUS_ORDER: Record<string, number> = {
+    blocked: 0,
+    in_progress: 1,
+    todo: 2,
+    done: 3,
+    cancelled: 4,
+}
+
+function sortTasks(tasks: Task[]): Task[] {
+    return [...tasks].sort((a, b) => {
+        // Status first (blocked > in_progress > todo > done)
+        const statusDiff = (STATUS_ORDER[a.status] ?? 9) - (STATUS_ORDER[b.status] ?? 9)
+        if (statusDiff !== 0) return statusDiff
+        // Then priority (P0 > P1 > P2 > P3)
+        const prioDiff = (PRIORITY_ORDER[a.priority] ?? 9) - (PRIORITY_ORDER[b.priority] ?? 9)
+        if (prioDiff !== 0) return prioDiff
+        // Then by due date (earliest first)
+        if (a.due_date && b.due_date) return new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
+        if (a.due_date) return -1
+        if (b.due_date) return 1
+        return 0
+    })
+}
+
+/* ============================================================
+   MAIN COMPONENT
    ============================================================ */
 export default function TaskBoard() {
-    const { tasks, loading } = useTasks()
-    const [statusFilter, setStatusFilter] = useState<string>('all')
-    const [collapsedDepts, setCollapsedDepts] = useState<Set<string>>(new Set())
+    const [viewMode, setViewMode] = useState<'department' | 'epic'>('department')
+    const [statusFilter, setStatusFilter] = useState('')
+    const [agentFilter, setAgentFilter] = useState('')
+    const [searchTerm, setSearchTerm] = useState('')
+    const { tasks, loading } = useTasks({
+        status: statusFilter || undefined,
+        agentId: agentFilter || undefined,
+    })
+    const { epics, loading: epicsLoading } = useEpics()
+    const { agents } = useAgents()
 
-    // Apply filter
-    const filtered = statusFilter === 'all'
-        ? tasks
-        : tasks.filter((t) => t.status === statusFilter)
+    const filteredTasks = useMemo(() => {
+        let result = tasks
+        if (searchTerm) {
+            const q = searchTerm.toLowerCase()
+            result = result.filter(
+                (t) =>
+                    t.title.toLowerCase().includes(q) ||
+                    (t.description || '').toLowerCase().includes(q) ||
+                    (t.agent?.name || '').toLowerCase().includes(q)
+            )
+        }
+        return sortTasks(result)
+    }, [tasks, searchTerm])
 
-    // Group by department
-    const grouped = DEPARTMENT_ORDER.reduce<Record<string, Task[]>>((acc, dept) => {
-        const deptTasks = filtered.filter((t) => getDepartment(t.agent) === dept)
-        if (deptTasks.length > 0) acc[dept] = deptTasks
-        return acc
-    }, {})
-
-    const toggleDept = (dept: string) => {
-        setCollapsedDepts((prev) => {
-            const next = new Set(prev)
-            next.has(dept) ? next.delete(dept) : next.add(dept)
-            return next
-        })
-    }
-
-    // Stats
-    const totalTasks = tasks.length
-    const blockedCount = tasks.filter((t) => t.status === 'blocked').length
+    const todoCount = tasks.filter((t) => t.status === 'todo').length
     const inProgressCount = tasks.filter((t) => t.status === 'in_progress').length
+    const blockedCount = tasks.filter((t) => t.status === 'blocked').length
     const doneCount = tasks.filter((t) => t.status === 'done').length
+
+    // Group tasks by department
+    const tasksByDept = useMemo(() => {
+        const map: Record<string, Task[]> = {}
+        const unassigned: Task[] = []
+        for (const task of filteredTasks) {
+            const dept = getDepartment(task)
+            if (dept) {
+                if (!map[dept.key]) map[dept.key] = []
+                map[dept.key].push(task)
+            } else {
+                unassigned.push(task)
+            }
+        }
+        return { departments: map, unassigned }
+    }, [filteredTasks])
+
+    // Group tasks by epic
+    const tasksByEpic = useMemo(() => {
+        const map: Record<string, Task[]> = {}
+        const unassigned: Task[] = []
+        for (const task of filteredTasks) {
+            if (task.epic_id) {
+                if (!map[task.epic_id]) map[task.epic_id] = []
+                map[task.epic_id].push(task)
+            } else {
+                unassigned.push(task)
+            }
+        }
+        return { epics: map, unassigned }
+    }, [filteredTasks])
 
     return (
         <div className="space-y-6 fade-in">
-            {/* Page header */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-start justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-navy tracking-tight">Task Board</h1>
-                    <p className="text-sm text-charcoal/60 mt-1">
-                        All tasks organized by department, with status and ownership.
-                    </p>
+                    <h1 className="text-2xl font-bold text-navy">Task Board</h1>
+                    <p className="text-sm text-charcoal mt-1">All tasks across agents, departments, and epics.</p>
                 </div>
-                <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1.5 text-[11px] font-medium text-charcoal/50">
-                        <span className="flex items-center gap-1">
-                            <span className="w-2 h-2 rounded-full bg-status-pending" /> {inProgressCount} In Progress
-                        </span>
-                        <span className="mx-1">·</span>
-                        <span className="flex items-center gap-1">
-                            <span className="w-2 h-2 rounded-full bg-status-blocked" /> {blockedCount} Blocked
-                        </span>
-                        <span className="mx-1">·</span>
-                        <span className="flex items-center gap-1">
-                            <span className="w-2 h-2 rounded-full bg-status-active" /> {doneCount} Done
-                        </span>
-                    </div>
+                {/* View mode toggle */}
+                <div className="flex bg-surface rounded-xl p-0.5 border border-light-gray/60">
+                    <button
+                        onClick={() => setViewMode('department')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${viewMode === 'department'
+                                ? 'bg-white text-navy shadow-sm'
+                                : 'text-charcoal hover:text-navy'
+                            }`}
+                    >
+                        By Department
+                    </button>
+                    <button
+                        onClick={() => setViewMode('epic')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${viewMode === 'epic'
+                                ? 'bg-white text-navy shadow-sm'
+                                : 'text-charcoal hover:text-navy'
+                            }`}
+                    >
+                        By Epic
+                    </button>
                 </div>
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatCard label="To Do" value={todoCount} icon={<Clock size={18} />} />
+                <StatCard label="In Progress" value={inProgressCount} icon={<ListTodo size={18} />} />
+                <StatCard label="Blocked" value={blockedCount} icon={<AlertTriangle size={18} />} />
+                <StatCard label="Done" value={doneCount} icon={<CheckCircle2 size={18} />} />
             </div>
 
             {/* Filters */}
-            <div className="flex items-center gap-2">
-                <Filter size={14} className="text-charcoal/40" />
-                <button
-                    onClick={() => setStatusFilter('all')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${statusFilter === 'all'
-                        ? 'bg-navy text-white'
-                        : 'bg-surface text-charcoal hover:bg-light-gray'
-                        }`}
+            <div className="flex items-center gap-3">
+                <div className="relative flex-1 max-w-sm">
+                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-charcoal/50" />
+                    <input
+                        type="text"
+                        placeholder="Search tasks..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="input pl-9"
+                    />
+                </div>
+                <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="input w-auto"
                 >
-                    All ({totalTasks})
-                </button>
-                {STATUS_FILTERS.map((s) => {
-                    const count = tasks.filter((t) => t.status === s).length
-                    if (count === 0) return null
-                    return (
-                        <button
-                            key={s}
-                            onClick={() => setStatusFilter(s)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer capitalize ${statusFilter === s
-                                ? 'bg-navy text-white'
-                                : 'bg-surface text-charcoal hover:bg-light-gray'
-                                }`}
-                        >
-                            {s.replace(/_/g, ' ')} ({count})
-                        </button>
-                    )
-                })}
+                    <option value="">All Statuses</option>
+                    <option value="todo">To Do</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="blocked">Blocked</option>
+                    <option value="done">Done</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+                <select
+                    value={agentFilter}
+                    onChange={(e) => setAgentFilter(e.target.value)}
+                    className="input w-auto"
+                >
+                    <option value="">All Agents</option>
+                    {agents.map((a) => (
+                        <option key={a.id} value={a.id}>{a.name}</option>
+                    ))}
+                </select>
             </div>
 
-            {/* Task list by department */}
             {loading ? (
-                <Card>
-                    <SkeletonLoader variant="row" count={8} />
-                </Card>
-            ) : filtered.length === 0 ? (
-                <Card>
-                    <EmptyState
-                        icon={<ListTodo size={24} />}
-                        title="No tasks found"
-                        description={statusFilter === 'all' ? 'No tasks in the system yet.' : `No tasks with status "${statusFilter.replace(/_/g, ' ')}".`}
-                    />
-                </Card>
+                <SkeletonLoader variant="card" count={3} />
+            ) : viewMode === 'department' ? (
+                <DepartmentView
+                    tasksByDept={tasksByDept.departments}
+                    unassigned={tasksByDept.unassigned}
+                />
             ) : (
-                <div className="space-y-4">
-                    {Object.entries(grouped).map(([dept, deptTasks]) => {
-                        const isCollapsed = collapsedDepts.has(dept)
-                        const colorClass = DEPARTMENT_COLORS[dept] || DEPARTMENT_COLORS['Other']
+                <EpicView
+                    tasksByEpic={tasksByEpic.epics}
+                    epics={epics}
+                    unassigned={tasksByEpic.unassigned}
+                />
+            )}
+        </div>
+    )
+}
 
-                        return (
-                            <div key={dept} className="rounded-xl overflow-hidden border border-light-gray/60 bg-white shadow-sm">
-                                {/* Department header */}
-                                <button
-                                    onClick={() => toggleDept(dept)}
-                                    className={`
-                                        w-full flex items-center justify-between px-5 py-3.5
-                                        bg-gradient-to-r ${colorClass} border-b
-                                        cursor-pointer transition-colors hover:brightness-95
-                                    `}
-                                >
-                                    <div className="flex items-center gap-2.5">
-                                        {isCollapsed ? (
-                                            <ChevronRight size={16} className="text-charcoal/60" />
-                                        ) : (
-                                            <ChevronDown size={16} className="text-charcoal/60" />
-                                        )}
-                                        <span className="text-[13px] font-bold text-navy tracking-tight">
-                                            {dept}
-                                        </span>
-                                        <span className="text-[11px] text-charcoal/50 font-medium bg-white/60 px-2 py-0.5 rounded-full">
-                                            {deptTasks.length} task{deptTasks.length !== 1 ? 's' : ''}
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        {deptTasks.filter((t) => t.status === 'blocked').length > 0 && (
-                                            <span className="flex items-center gap-1 text-[10px] text-status-blocked font-semibold">
-                                                <AlertTriangle size={12} />
-                                                {deptTasks.filter((t) => t.status === 'blocked').length} blocked
-                                            </span>
-                                        )}
-                                    </div>
-                                </button>
+/* ============================================================
+   DEPARTMENT VIEW
+   ============================================================ */
+function DepartmentView({
+    tasksByDept,
+    unassigned,
+}: {
+    tasksByDept: Record<string, Task[]>
+    unassigned: Task[]
+}) {
+    return (
+        <div className="space-y-4">
+            {DEPARTMENTS.map((dept) => {
+                const tasks = tasksByDept[dept.key]
+                if (!tasks || tasks.length === 0) return null
+                const pendingCount = tasks.filter((t) => t.status === 'todo' || t.status === 'in_progress' || t.status === 'blocked').length
+                return (
+                    <DepartmentSection
+                        key={dept.key}
+                        department={dept}
+                        tasks={tasks}
+                        pendingCount={pendingCount}
+                    />
+                )
+            })}
 
-                                {/* Task rows */}
-                                {!isCollapsed && (
-                                    <div>
-                                        {/* Table header */}
-                                        <div className="grid grid-cols-12 gap-2 px-5 py-2.5 bg-surface/50 border-b border-light-gray/30 text-[10px] font-semibold text-charcoal/50 uppercase tracking-wider">
-                                            <div className="col-span-3">Task</div>
-                                            <div className="col-span-2">Responsible</div>
-                                            <div className="col-span-1">Priority</div>
-                                            <div className="col-span-1">Status</div>
-                                            <div className="col-span-3">Next Step</div>
-                                            <div className="col-span-2">Blocker</div>
-                                        </div>
+            {unassigned.length > 0 && (
+                <Card className="!p-0 overflow-hidden">
+                    <div className="px-5 py-4 border-b border-light-gray/60 flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-charcoal/8 flex items-center justify-center">
+                            <LayoutDashboard size={14} className="text-charcoal" />
+                        </div>
+                        <div>
+                            <h3 className="text-[15px] font-semibold text-navy">Unassigned</h3>
+                            <p className="text-xs text-charcoal">{unassigned.length} tasks with no department mapping</p>
+                        </div>
+                    </div>
+                    <div className="px-5 py-3 space-y-2">
+                        {unassigned.map((task) => (
+                            <TaskCard key={task.id} task={task} showDepartment={false} />
+                        ))}
+                    </div>
+                </Card>
+            )}
+        </div>
+    )
+}
 
-                                        {/* Rows */}
-                                        {deptTasks
-                                            .sort((a, b) => {
-                                                // Sort: blocked first, then in_progress, then todo, then done
-                                                const order: Record<string, number> = {
-                                                    blocked: 0,
-                                                    in_progress: 1,
-                                                    todo: 2,
-                                                    done: 3,
-                                                    cancelled: 4,
-                                                }
-                                                return (order[a.status] ?? 5) - (order[b.status] ?? 5)
-                                            })
-                                            .map((task) => (
-                                                <div
-                                                    key={task.id}
-                                                    className={`
-                                                        grid grid-cols-12 gap-2 px-5 py-3 items-center
-                                                        border-b border-light-gray/20 last:border-b-0
-                                                        hover:bg-surface/40 transition-colors
-                                                        ${task.status === 'blocked' ? 'bg-red-50/30' : ''}
-                                                        ${task.status === 'done' ? 'opacity-60' : ''}
-                                                    `}
-                                                >
-                                                    {/* Task name */}
-                                                    <div className="col-span-3 min-w-0">
-                                                        <div className="text-[13px] font-medium text-navy truncate">
-                                                            {task.title}
-                                                        </div>
-                                                        {task.due_date && (
-                                                            <div className="flex items-center gap-1 mt-0.5 text-[10px] text-charcoal/50">
-                                                                <CalendarDays size={10} />
-                                                                {new Date(task.due_date).toLocaleDateString('en-GB', {
-                                                                    day: '2-digit',
-                                                                    month: 'short',
-                                                                    year: 'numeric',
-                                                                })}
-                                                            </div>
-                                                        )}
-                                                    </div>
+function DepartmentSection({
+    department,
+    tasks,
+    pendingCount,
+}: {
+    department: Department
+    tasks: Task[]
+    pendingCount: number
+}) {
+    const [expanded, setExpanded] = useState(true)
+    const navigate = useNavigate()
+    const Icon = department.icon
+    const [iconColor, iconBg] = department.color.split(' ')
 
-                                                    {/* Responsible */}
-                                                    <div className="col-span-2 flex items-center gap-2 min-w-0">
-                                                        <div className="w-6 h-6 rounded-full bg-navy/8 flex items-center justify-center flex-shrink-0">
-                                                            <span className="text-[9px] font-bold text-navy">
-                                                                {(task.agent?.name || '?').slice(0, 2).toUpperCase()}
-                                                            </span>
-                                                        </div>
-                                                        <span className="text-xs text-navy font-medium truncate">
-                                                            {task.agent?.name || 'Unassigned'}
-                                                        </span>
-                                                    </div>
-
-                                                    {/* Priority */}
-                                                    <div className="col-span-1">
-                                                        <StatusBadge status={task.priority} size="sm" />
-                                                    </div>
-
-                                                    {/* Status */}
-                                                    <div className="col-span-1">
-                                                        <StatusBadge status={task.status} size="sm" />
-                                                    </div>
-
-                                                    {/* Next Step */}
-                                                    <div className="col-span-3 min-w-0">
-                                                        <div className="flex items-start gap-1.5">
-                                                            {task.status !== 'done' && task.status !== 'cancelled' && (
-                                                                <ArrowRight size={12} className="text-teal flex-shrink-0 mt-0.5" />
-                                                            )}
-                                                            <span className="text-xs text-charcoal line-clamp-2">
-                                                                {getNextStep(task)}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Blocker */}
-                                                    <div className="col-span-2 min-w-0">
-                                                        {task.status === 'blocked' && task.blocker_path ? (
-                                                            <div className="flex items-start gap-1.5">
-                                                                <AlertTriangle size={12} className="text-status-blocked flex-shrink-0 mt-0.5" />
-                                                                <span className="text-xs text-status-blocked font-medium line-clamp-2">
-                                                                    {task.blocker_path}
-                                                                </span>
-                                                            </div>
-                                                        ) : task.status === 'blocked' ? (
-                                                            <span className="text-xs text-status-blocked font-medium">Blocked</span>
-                                                        ) : (
-                                                            <span className="text-xs text-charcoal/30">—</span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                    </div>
-                                )}
-                            </div>
-                        )
-                    })}
+    return (
+        <Card className="!p-0 overflow-hidden">
+            {/* Department header */}
+            <div className="flex items-center gap-3 px-5 py-4 border-b border-light-gray/60">
+                <button
+                    onClick={() => setExpanded(!expanded)}
+                    className="text-charcoal/40 hover:text-charcoal transition-colors"
+                >
+                    {expanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                </button>
+                <div className={`w-9 h-9 rounded-xl ${iconBg} flex items-center justify-center flex-shrink-0`}>
+                    <Icon size={16} className={iconColor} />
                 </div>
+                <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                        <h3 className="text-[15px] font-semibold text-navy">{department.label}</h3>
+                        {pendingCount > 0 && (
+                            <span className="text-[11px] font-semibold text-white bg-amber-500 px-1.5 py-0.5 rounded-md">
+                                {pendingCount} pending
+                            </span>
+                        )}
+                    </div>
+                    <p className="text-xs text-charcoal">{tasks.length} tasks total</p>
+                </div>
+                <button
+                    onClick={() => navigate(department.route)}
+                    className="flex items-center gap-1 text-xs font-medium text-teal hover:text-teal/80 transition-colors"
+                >
+                    Open {department.label}
+                    <ExternalLink size={12} />
+                </button>
+            </div>
+
+            {/* Tasks */}
+            {expanded && (
+                <div className="px-5 py-3 space-y-2">
+                    {tasks.map((task, idx) => (
+                        <TaskCard key={task.id} task={task} showDepartment={false} index={idx + 1} />
+                    ))}
+                </div>
+            )}
+        </Card>
+    )
+}
+
+/* ============================================================
+   EPIC VIEW
+   ============================================================ */
+function EpicView({
+    tasksByEpic,
+    epics,
+    unassigned,
+}: {
+    tasksByEpic: Record<string, Task[]>
+    epics: Epic[]
+    unassigned: Task[]
+}) {
+    return (
+        <div className="space-y-4">
+            {epics.map((epic) => {
+                const tasks = tasksByEpic[epic.id]
+                if (!tasks || tasks.length === 0) return null
+                return <EpicSection key={epic.id} epic={epic} tasks={tasks} />
+            })}
+
+            {unassigned.length > 0 && (
+                <Card className="!p-0 overflow-hidden">
+                    <div className="px-5 py-4 border-b border-light-gray/60 flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-charcoal/8 flex items-center justify-center">
+                            <ListTodo size={14} className="text-charcoal" />
+                        </div>
+                        <div>
+                            <h3 className="text-[15px] font-semibold text-navy">No Epic</h3>
+                            <p className="text-xs text-charcoal">{unassigned.length} tasks not linked to any epic</p>
+                        </div>
+                    </div>
+                    <div className="px-5 py-3 space-y-2">
+                        {unassigned.map((task, idx) => (
+                            <TaskCard key={task.id} task={task} showDepartment index={idx + 1} />
+                        ))}
+                    </div>
+                </Card>
+            )}
+        </div>
+    )
+}
+
+function EpicSection({ epic, tasks }: { epic: Epic; tasks: Task[] }) {
+    const [expanded, setExpanded] = useState(true)
+
+    const doneCount = tasks.filter((t) => t.status === 'done').length
+    const pendingCount = tasks.filter((t) => t.status === 'todo' || t.status === 'in_progress' || t.status === 'blocked').length
+    const progressPct = tasks.length > 0 ? Math.round((doneCount / tasks.length) * 100) : epic.completion_pct
+
+    return (
+        <Card className="!p-0 overflow-hidden">
+            {/* Epic header */}
+            <button
+                onClick={() => setExpanded(!expanded)}
+                className="w-full flex items-center gap-4 px-5 py-4 hover:bg-surface/50 transition-colors text-left cursor-pointer border-b border-light-gray/60"
+            >
+                <div className="text-charcoal/40">
+                    {expanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                </div>
+                <div className="w-9 h-9 rounded-xl bg-teal/8 flex items-center justify-center flex-shrink-0">
+                    <Target size={16} className="text-teal" />
+                </div>
+                <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                        <span className="text-[15px] font-semibold text-navy">{epic.title}</span>
+                        <StatusBadge status={epic.status} size="sm" />
+                        {pendingCount > 0 && (
+                            <span className="text-[11px] font-semibold text-white bg-amber-500 px-1.5 py-0.5 rounded-md">
+                                {pendingCount} pending
+                            </span>
+                        )}
+                    </div>
+                    {epic.description && (
+                        <div className="text-xs text-charcoal mt-0.5 line-clamp-1">{epic.description}</div>
+                    )}
+                </div>
+                <div className="flex items-center gap-4 flex-shrink-0">
+                    <div className="text-right">
+                        <div className="text-xs font-medium text-charcoal">{tasks.length} tasks</div>
+                        <div className="text-[11px] text-charcoal/60">{doneCount} done</div>
+                    </div>
+                    <div className="w-10 h-10 relative">
+                        <svg className="w-10 h-10 -rotate-90" viewBox="0 0 36 36">
+                            <path
+                                d="M18 2.5a15.5 15.5 0 1 1 0 31 15.5 15.5 0 0 1 0-31"
+                                fill="none"
+                                stroke="#e5e7eb"
+                                strokeWidth="3"
+                            />
+                            <path
+                                d="M18 2.5a15.5 15.5 0 1 1 0 31 15.5 15.5 0 0 1 0-31"
+                                fill="none"
+                                stroke="#009886"
+                                strokeWidth="3"
+                                strokeDasharray={`${progressPct} ${100 - progressPct}`}
+                                strokeLinecap="round"
+                            />
+                        </svg>
+                        <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-navy">
+                            {progressPct}%
+                        </span>
+                    </div>
+                </div>
+            </button>
+
+            {/* Task list */}
+            {expanded && (
+                <div className="px-5 py-3 space-y-2">
+                    {tasks.map((task, idx) => (
+                        <TaskCard key={task.id} task={task} showDepartment index={idx + 1} />
+                    ))}
+                </div>
+            )}
+        </Card>
+    )
+}
+
+/* ============================================================
+   TASK CARD — individual detailed task object
+   ============================================================ */
+function TaskCard({
+    task,
+    showDepartment = true,
+    index,
+}: {
+    task: Task
+    showDepartment?: boolean
+    index?: number
+}) {
+    const navigate = useNavigate()
+    const dept = getDepartment(task)
+
+    const isDone = task.status === 'done' || task.status === 'cancelled'
+
+    return (
+        <div className={`flex items-start gap-3 p-3.5 rounded-xl transition-colors ${isDone ? 'bg-surface/60 opacity-60' : 'bg-surface hover:bg-light-gray/30'
+            }`}>
+            {/* Sequence number */}
+            {index !== undefined && (
+                <span className="text-[10px] font-bold text-charcoal/30 mt-1 w-4 text-right flex-shrink-0">
+                    {index}
+                </span>
+            )}
+
+            {/* Status indicator */}
+            <div className="flex-shrink-0 mt-0.5">
+                {task.status === 'done' ? (
+                    <CheckCircle2 size={16} className="text-teal" />
+                ) : task.status === 'blocked' ? (
+                    <AlertTriangle size={16} className="text-red-500" />
+                ) : task.status === 'in_progress' ? (
+                    <div className="w-4 h-4 rounded-full border-2 border-amber-400 border-t-transparent animate-spin" />
+                ) : (
+                    <Clock size={16} className="text-charcoal/40" />
+                )}
+            </div>
+
+            {/* Task info */}
+            <div className="min-w-0 flex-1">
+                <div className="text-sm font-medium text-navy">{task.title}</div>
+                {task.description && (
+                    <div className="text-xs text-charcoal mt-0.5 line-clamp-2 leading-relaxed">{task.description}</div>
+                )}
+                {task.blocker_path && task.status === 'blocked' && (
+                    <div className="text-[11px] text-red-500 mt-1 flex items-center gap-1">
+                        <AlertTriangle size={10} />
+                        Blocker: {task.blocker_path}
+                    </div>
+                )}
+            </div>
+
+            {/* Agent */}
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+                <div className="w-6 h-6 rounded-full bg-navy/8 flex items-center justify-center">
+                    {task.agent ? (
+                        <span className="text-[9px] font-bold text-navy">
+                            {task.agent.name.slice(0, 2).toUpperCase()}
+                        </span>
+                    ) : (
+                        <User size={10} className="text-charcoal/40" />
+                    )}
+                </div>
+                <span className="text-[11px] text-charcoal font-medium max-w-[90px] truncate">
+                    {task.agent?.name || 'Unassigned'}
+                </span>
+            </div>
+
+            {/* Department link */}
+            {showDepartment && dept && (
+                <button
+                    onClick={() => navigate(dept.route)}
+                    className="flex items-center gap-1 text-[10px] font-medium text-teal bg-teal/5 hover:bg-teal/10 px-2 py-0.5 rounded-full transition-colors flex-shrink-0"
+                >
+                    {dept.label}
+                    <ExternalLink size={8} />
+                </button>
+            )}
+
+            {/* Priority */}
+            <div className="flex-shrink-0">
+                <StatusBadge status={task.priority} size="sm" />
+            </div>
+
+            {/* Status */}
+            <div className="flex-shrink-0">
+                <StatusBadge status={task.status} size="sm" />
+            </div>
+
+            {/* Due date */}
+            {task.due_date && (
+                <span className="text-[10px] text-charcoal flex-shrink-0 whitespace-nowrap">
+                    {new Date(task.due_date).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                </span>
             )}
         </div>
     )

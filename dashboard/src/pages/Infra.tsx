@@ -6,22 +6,19 @@ import StatCard from '../components/ui/StatCard'
 import SkeletonLoader from '../components/ui/SkeletonLoader'
 import EmptyState from '../components/ui/EmptyState'
 import Drawer from '../components/ui/Drawer'
-import { useAgents } from '../hooks/useAgents'
+import { useAgents, useAgentSkills } from '../hooks/useAgents'
 import { useActivityLog } from '../hooks/useActivityLog'
 import { useSkills } from '../hooks/useSkills'
 import { useTasks } from '../hooks/useTasks'
 import { getStatusColor } from '../lib/types'
-import DepartmentTasks from '../components/ui/DepartmentTasks'
-import DepartmentTools from '../components/ui/DepartmentTools'
-import type { Agent, ActivityLogEntry } from '../lib/types'
+import type { Agent } from '../lib/types'
 import {
-    Bot,
+    Server,
     Activity,
     Zap,
-    Server,
-    GitBranch,
-    Clock,
     Search,
+    ChevronRight,
+    GitBranch,
 } from 'lucide-react'
 
 const statusDotClass: Record<string, string> = {
@@ -32,34 +29,24 @@ const statusDotClass: Record<string, string> = {
 }
 
 export default function Infra() {
-    const [activeTab, setActiveTab] = useState('agents')
+    const [activeTab, setActiveTab] = useState('Agents')
 
     return (
         <div className="space-y-6 fade-in">
             <div>
                 <h1 className="text-2xl font-bold text-navy">Infrastructure & Agents</h1>
-                <p className="text-sm text-charcoal mt-1">Agent management, activity audit trail, and skill registry.</p>
+                <p className="text-sm text-charcoal mt-1">Agent management, activity audit trail, and skills.</p>
             </div>
 
             <TabNav
-                tabs={[
-                    { key: 'agents', label: 'Agents' },
-                    { key: 'activity', label: 'Activity Log' },
-                    { key: 'skills', label: 'Skills' },
-                    { key: 'tools', label: 'Tools' },
-                    { key: 'tasks', label: 'Tasks' },
-                ]}
-                activeTab={activeTab}
+                tabs={['Agents', 'Activity Log', 'Skills']}
+                active={activeTab}
                 onChange={setActiveTab}
             />
 
-            <div className="mt-4">
-                {activeTab === 'agents' && <AgentsTab />}
-                {activeTab === 'activity' && <ActivityLogTab />}
-                {activeTab === 'skills' && <SkillsTab />}
-                {activeTab === 'tools' && <DepartmentTools department="infra" />}
-                {activeTab === 'tasks' && <DepartmentTasks agentNames={['CEO', 'CDO', 'CRO', 'CFO', 'LinkedIn', 'Email', 'Brand', 'Legal', 'Admin']} title="All Agent Tasks" />}
-            </div>
+            {activeTab === 'Agents' && <AgentsTab />}
+            {activeTab === 'Activity Log' && <ActivityLogTab />}
+            {activeTab === 'Skills' && <SkillsTab />}
         </div>
     )
 }
@@ -67,216 +54,197 @@ export default function Infra() {
 /* ============================================================
    AGENTS TAB
    ============================================================ */
-const HIERARCHY = [
-    {
-        id: 'ceo',
-        children: [
-            { id: 'cdo', children: [] },
-            {
-                id: 'cro',
-                children: [
-                    { id: 'linkedin-outbound', children: [] },
-                    { id: 'email-outbound', children: [] },
-                    { id: 'brand', children: [] },
-                ],
-            },
-            {
-                id: 'cfo',
-                children: [
-                    { id: 'legal-compliance', children: [] },
-                    { id: 'admin-ops', children: [] },
-                ],
-            },
-        ],
-    },
-]
-
 function AgentsTab() {
     const { agents, loading } = useAgents()
     const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null)
-    const { tasks } = useTasks({ agentId: selectedAgent?.id || undefined })
-    const { entries: agentActivity } = useActivityLog({
-        agentId: selectedAgent?.id || undefined,
-        limit: 10,
-    })
 
-    const agentMap = new Map(agents.map((a) => [a.id, a]))
-
-    function renderTreeNode(node: { id: string; children: any[] }, depth: number = 0) {
-        const agent = agentMap.get(node.id)
-        if (!agent) return null
-        const color = getStatusColor(agent.status)
-
-        return (
-            <div key={node.id} style={{ paddingLeft: depth * 24 }}>
-                <div
-                    onClick={() => setSelectedAgent(agent)}
-                    className={`flex items-center gap-3 py-2 px-3 rounded-lg cursor-pointer transition-colors
-            ${selectedAgent?.id === agent.id ? 'bg-teal/10' : 'hover:bg-surface'}`}
-                >
-                    {depth > 0 && (
-                        <GitBranch size={12} className="text-light-gray flex-shrink-0" />
-                    )}
-                    <div className={`w-2 h-2 rounded-full ${statusDotClass[color]} flex-shrink-0`} />
-                    <span className="text-sm font-medium text-navy">{agent.name}</span>
-                    <span className="text-xs text-charcoal">{agent.role}</span>
-                </div>
-                {node.children.map((child: any) => renderTreeNode(child, depth + 1))}
-            </div>
-        )
-    }
+    // Build hierarchy
+    const cLevel = agents.filter((a) => !a.reporting_to)
+    const getReports = (id: string) => agents.filter((a) => a.reporting_to === id)
 
     if (loading) return <SkeletonLoader variant="card" count={4} />
 
     return (
         <div className="space-y-6">
-            {/* Agent cards grid */}
-            {agents.length === 0 ? (
-                <EmptyState icon={<Bot size={24} />} title="No agents found" description="Agent data will appear once connected." />
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {agents.map((agent) => {
-                        const color = getStatusColor(agent.status)
-                        return (
-                            <div
-                                key={agent.id}
-                                onClick={() => setSelectedAgent(agent)}
-                                className={`card-sm cursor-pointer hover:shadow-card transition-shadow
-                  ${selectedAgent?.id === agent.id ? 'ring-2 ring-teal' : ''}`}
-                            >
-                                <div className="flex items-start gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-navy/10 flex items-center justify-center relative flex-shrink-0">
-                                        <span className="text-xs font-semibold text-navy">
-                                            {agent.name.slice(0, 2).toUpperCase()}
-                                        </span>
-                                        <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${statusDotClass[color]}`} />
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                        <div className="text-sm font-semibold text-navy">{agent.name}</div>
-                                        <div className="text-xs text-charcoal">{agent.role}</div>
-                                        {agent.current_task && (
-                                            <div className="text-[11px] text-charcoal mt-1 truncate">
-                                                📋 {agent.current_task}
-                                            </div>
-                                        )}
-                                        {agent.skills && agent.skills.length > 0 && (
-                                            <div className="flex flex-wrap gap-1 mt-2">
-                                                {agent.skills.map((skill) => (
-                                                    <span
-                                                        key={skill.id}
-                                                        className="text-[10px] bg-light-gray/60 text-charcoal px-1.5 py-0.5 rounded"
-                                                    >
-                                                        {skill.name}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        )
-                    })}
-                </div>
-            )}
-
-            {/* Hierarchy Tree */}
+            {/* Agent hierarchy tree */}
             <Card>
-                <CardHeader title="Agent Hierarchy" subtitle="Reporting structure" />
-                <div className="py-2">
-                    {HIERARCHY.map((node) => renderTreeNode(node))}
+                <CardHeader title="Agent Hierarchy" icon={<GitBranch size={16} />} subtitle="Reporting structure" />
+                <div className="space-y-3">
+                    {cLevel.map((agent) => (
+                        <div key={agent.id}>
+                            <AgentTreeNode agent={agent} onClick={setSelectedAgent} />
+                            <div className="ml-8 mt-1 space-y-1">
+                                {getReports(agent.id).map((report) => (
+                                    <div key={report.id}>
+                                        <AgentTreeNode agent={report} onClick={setSelectedAgent} level={1} />
+                                        <div className="ml-8 mt-1 space-y-1">
+                                            {getReports(report.id).map((sub) => (
+                                                <AgentTreeNode key={sub.id} agent={sub} onClick={setSelectedAgent} level={2} />
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </Card>
 
-            {/* Agent detail drawer */}
-            <Drawer
-                open={!!selectedAgent}
-                onClose={() => setSelectedAgent(null)}
-                title={selectedAgent?.name || 'Agent Details'}
-                subtitle={selectedAgent?.role || undefined}
-            >
-                {selectedAgent && (
-                    <div className="space-y-6">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="text-[11px] text-charcoal font-medium">Status</label>
-                                <div className="mt-0.5"><StatusBadge status={selectedAgent.status} /></div>
-                            </div>
-                            <div>
-                                <label className="text-[11px] text-charcoal font-medium">Reports To</label>
-                                <p className="text-sm text-navy mt-0.5">
-                                    {selectedAgent.reporting_to ? agentMap.get(selectedAgent.reporting_to)?.name || selectedAgent.reporting_to : 'None'}
-                                </p>
-                            </div>
-                            <div>
-                                <label className="text-[11px] text-charcoal font-medium">Current Task</label>
-                                <p className="text-sm text-navy mt-0.5">{selectedAgent.current_task || '—'}</p>
-                            </div>
-                        </div>
-
-                        {/* Skills */}
-                        {selectedAgent.skills && selectedAgent.skills.length > 0 && (
-                            <div>
-                                <label className="text-[11px] text-charcoal font-medium mb-2 block">Skills</label>
-                                <div className="space-y-1.5">
-                                    {selectedAgent.skills.map((skill) => (
-                                        <div key={skill.id} className="flex items-center justify-between p-2 rounded-lg bg-surface">
-                                            <div>
-                                                <span className="text-sm text-navy">{skill.name}</span>
-                                                <span className="text-xs text-charcoal ml-2">{skill.category}</span>
-                                            </div>
-                                            <StatusBadge status={skill.status} size="sm" />
-                                        </div>
-                                    ))}
+            {/* Agent cards grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {agents.map((agent) => {
+                    const color = getStatusColor(agent.status)
+                    return (
+                        <Card key={agent.id} interactive onClick={() => setSelectedAgent(agent)}>
+                            <div className="flex items-start gap-3">
+                                <div className="w-11 h-11 rounded-xl bg-navy/8 flex items-center justify-center relative flex-shrink-0">
+                                    <span className="text-sm font-bold text-navy">{agent.name.slice(0, 2).toUpperCase()}</span>
+                                    <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${statusDotClass[color]}`} />
                                 </div>
-                            </div>
-                        )}
-
-                        {/* Tasks */}
-                        <div>
-                            <label className="text-[11px] text-charcoal font-medium mb-2 block">
-                                Tasks ({tasks.length})
-                            </label>
-                            {tasks.length === 0 ? (
-                                <p className="text-xs text-charcoal">No tasks assigned.</p>
-                            ) : (
-                                <div className="space-y-1.5 max-h-48 overflow-y-auto">
-                                    {tasks.map((task) => (
-                                        <div key={task.id} className="flex items-center justify-between p-2 rounded-lg bg-surface">
-                                            <span className="text-sm text-navy truncate flex-1 mr-2">{task.title}</span>
-                                            <StatusBadge status={task.status} size="sm" />
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Recent Activity */}
-                        <div>
-                            <label className="text-[11px] text-charcoal font-medium mb-2 block">
-                                Recent Activity ({agentActivity.length})
-                            </label>
-                            {agentActivity.length === 0 ? (
-                                <p className="text-xs text-charcoal">No activity recorded.</p>
-                            ) : (
-                                <div className="space-y-1.5 max-h-48 overflow-y-auto">
-                                    {agentActivity.map((entry) => (
-                                        <div key={entry.id} className="p-2 rounded-lg bg-surface">
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-xs text-charcoal">
-                                                    {(entry.skill_used ?? 'action').replace(/_/g, ' ')}
+                                <div className="min-w-0 flex-1">
+                                    <div className="text-sm font-semibold text-navy">{agent.name}</div>
+                                    <div className="text-xs text-charcoal mt-0.5">{agent.role}</div>
+                                    {agent.current_task && (
+                                        <div className="text-[11px] text-teal mt-1.5 truncate">{agent.current_task}</div>
+                                    )}
+                                    {agent.skills && agent.skills.length > 0 && (
+                                        <div className="flex flex-wrap gap-1 mt-2">
+                                            {agent.skills.map((s) => (
+                                                <span key={s.id} className="text-[10px] text-charcoal bg-light-gray/60 px-1.5 py-0.5 rounded">
+                                                    {s.name}
                                                 </span>
-                                                <StatusBadge status={entry.status} size="sm" />
-                                            </div>
-                                            <p className="text-xs text-charcoal mt-0.5 line-clamp-1">{entry.output_summary}</p>
+                                            ))}
                                         </div>
-                                    ))}
+                                    )}
                                 </div>
-                            )}
+                                <ChevronRight size={16} className="text-charcoal/30 flex-shrink-0" />
+                            </div>
+                        </Card>
+                    )
+                })}
+            </div>
+
+            {/* Agent detail drawer */}
+            <AgentDrawer agent={selectedAgent} onClose={() => setSelectedAgent(null)} />
+        </div>
+    )
+}
+
+function AgentTreeNode({ agent, onClick, level = 0 }: { agent: Agent; onClick: (a: Agent) => void; level?: number }) {
+    const color = getStatusColor(agent.status)
+    return (
+        <div
+            onClick={() => onClick(agent)}
+            className="flex items-center gap-2 p-2 rounded-lg hover:bg-surface cursor-pointer transition-colors"
+        >
+            <div className={`w-2 h-2 rounded-full ${statusDotClass[color]}`} />
+            <span className={`text-sm ${level === 0 ? 'font-semibold' : 'font-medium'} text-navy`}>{agent.name}</span>
+            <span className="text-[11px] text-charcoal">{agent.role}</span>
+        </div>
+    )
+}
+
+function AgentDrawer({ agent, onClose }: { agent: Agent | null; onClose: () => void }) {
+    const { skills: agentSkills, loading: skillsLoading } = useAgentSkills(agent?.id || null)
+    const { tasks, loading: tasksLoading } = useTasks({ agentId: agent?.id || undefined })
+    const { entries, loading: activityLoading } = useActivityLog({
+        agentId: agent?.id || undefined,
+        limit: 10,
+    })
+
+    return (
+        <Drawer
+            open={!!agent}
+            onClose={onClose}
+            title={agent?.name || 'Agent Details'}
+            subtitle={agent?.role}
+            width="w-[520px]"
+        >
+            {agent && (
+                <div className="space-y-6">
+                    {/* Info */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-[11px] text-charcoal font-medium uppercase tracking-wide">Status</label>
+                            <div className="mt-1"><StatusBadge status={agent.status} /></div>
+                        </div>
+                        <div>
+                            <label className="text-[11px] text-charcoal font-medium uppercase tracking-wide">Reports To</label>
+                            <p className="text-sm text-navy mt-1">{agent.reporting_to || 'None (CEO)'}</p>
                         </div>
                     </div>
-                )}
-            </Drawer>
-        </div>
+
+                    {agent.current_task && (
+                        <div>
+                            <label className="text-[11px] text-charcoal font-medium uppercase tracking-wide">Current Task</label>
+                            <p className="text-sm text-navy mt-1">{agent.current_task}</p>
+                        </div>
+                    )}
+
+                    {/* Skills */}
+                    <div>
+                        <label className="text-[11px] text-charcoal font-medium uppercase tracking-wide mb-2 block">Skills</label>
+                        {skillsLoading ? (
+                            <SkeletonLoader variant="row" count={2} />
+                        ) : agentSkills.length === 0 ? (
+                            <p className="text-xs text-charcoal">No skills assigned</p>
+                        ) : (
+                            <div className="space-y-1.5">
+                                {agentSkills.map((s) => (
+                                    <div key={s.id} className="flex items-center gap-2 p-2 rounded-lg bg-surface">
+                                        <Zap size={12} className="text-teal" />
+                                        <span className="text-xs font-medium text-navy">{s.name}</span>
+                                        <span className="text-[10px] text-charcoal ml-auto">
+                                            {s.run_count} runs
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Tasks */}
+                    <div>
+                        <label className="text-[11px] text-charcoal font-medium uppercase tracking-wide mb-2 block">
+                            Tasks ({tasks.length})
+                        </label>
+                        {tasksLoading ? (
+                            <SkeletonLoader variant="row" count={3} />
+                        ) : tasks.length === 0 ? (
+                            <p className="text-xs text-charcoal">No tasks assigned</p>
+                        ) : (
+                            <div className="space-y-1.5 max-h-[200px] overflow-y-auto">
+                                {tasks.map((t) => (
+                                    <div key={t.id} className="flex items-center gap-2 p-2 rounded-lg bg-surface">
+                                        <span className="text-xs font-medium text-navy flex-1 truncate">{t.title}</span>
+                                        <StatusBadge status={t.status} size="sm" />
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Recent Activity */}
+                    <div>
+                        <label className="text-[11px] text-charcoal font-medium uppercase tracking-wide mb-2 block">Recent Activity</label>
+                        {activityLoading ? (
+                            <SkeletonLoader variant="row" count={3} />
+                        ) : entries.length === 0 ? (
+                            <p className="text-xs text-charcoal">No recent activity</p>
+                        ) : (
+                            <div className="space-y-1.5 max-h-[200px] overflow-y-auto">
+                                {entries.map((e) => (
+                                    <div key={e.id} className="flex items-start gap-2 p-2 rounded-lg bg-surface">
+                                        <div className="text-xs font-medium text-navy flex-1 line-clamp-1">{e.output_summary}</div>
+                                        <StatusBadge status={e.status} size="sm" />
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+        </Drawer>
     )
 }
 
@@ -286,21 +254,29 @@ function AgentsTab() {
 function ActivityLogTab() {
     const [agentFilter, setAgentFilter] = useState('')
     const [statusFilter, setStatusFilter] = useState('')
-    const { agents } = useAgents()
     const { entries, loading } = useActivityLog({
         agentId: agentFilter || undefined,
         status: statusFilter || undefined,
-        limit: 100,
+        limit: 50,
     })
+    const { agents } = useAgents()
 
     return (
         <div className="space-y-4">
             {/* Filters */}
             <div className="flex items-center gap-3">
+                <div className="relative flex-1 max-w-sm">
+                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-charcoal/50" />
+                    <input
+                        type="text"
+                        placeholder="Search activity..."
+                        className="input pl-9"
+                    />
+                </div>
                 <select
                     value={agentFilter}
                     onChange={(e) => setAgentFilter(e.target.value)}
-                    className="px-3 py-2 text-sm border border-light-gray rounded-lg bg-white focus:outline-none focus:border-teal cursor-pointer"
+                    className="input w-auto"
                 >
                     <option value="">All Agents</option>
                     {agents.map((a) => (
@@ -310,69 +286,61 @@ function ActivityLogTab() {
                 <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="px-3 py-2 text-sm border border-light-gray rounded-lg bg-white focus:outline-none focus:border-teal cursor-pointer"
+                    className="input w-auto"
                 >
                     <option value="">All Statuses</option>
-                    {['success', 'failed', 'in_progress', 'pending'].map((s) => (
-                        <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
-                    ))}
+                    <option value="success">Success</option>
+                    <option value="failed">Failed</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="pending">Pending</option>
                 </select>
-                <span className="text-xs text-charcoal ml-auto">
-                    {entries.length} entries
-                </span>
             </div>
 
-            {/* Log table */}
-            <Card padding={false}>
+            {/* Table */}
+            <Card className="!p-0 overflow-hidden">
                 {loading ? (
-                    <div className="p-4"><SkeletonLoader variant="row" count={8} /></div>
+                    <div className="p-6"><SkeletonLoader variant="row" count={8} /></div>
                 ) : entries.length === 0 ? (
                     <EmptyState
                         icon={<Activity size={24} />}
-                        title="No activity log entries"
+                        title="No activity"
                         description="Agent activity will appear here once actions begin."
                     />
                 ) : (
                     <div className="overflow-x-auto">
-                        <table className="w-full">
+                        <table>
                             <thead>
-                                <tr className="border-b border-light-gray">
-                                    <th className="text-left text-[11px] font-semibold text-charcoal uppercase tracking-wide px-4 py-3">Time</th>
-                                    <th className="text-left text-[11px] font-semibold text-charcoal uppercase tracking-wide px-4 py-3">Agent</th>
-                                    <th className="text-left text-[11px] font-semibold text-charcoal uppercase tracking-wide px-4 py-3">Skill Used</th>
-                                    <th className="text-left text-[11px] font-semibold text-charcoal uppercase tracking-wide px-4 py-3">Output</th>
-                                    <th className="text-left text-[11px] font-semibold text-charcoal uppercase tracking-wide px-4 py-3">Status</th>
-                                    <th className="text-left text-[11px] font-semibold text-charcoal uppercase tracking-wide px-4 py-3">Risk</th>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Agent</th>
+                                    <th>Skill Used</th>
+                                    <th>Output</th>
+                                    <th>Status</th>
+                                    <th>Risk</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {entries.map((entry) => (
-                                    <tr key={entry.id} className="border-b border-light-gray/50 hover:bg-surface transition-colors">
-                                        <td className="px-4 py-3 text-xs text-charcoal whitespace-nowrap">
+                                    <tr key={entry.id}>
+                                        <td className="text-xs text-charcoal whitespace-nowrap">
                                             {new Date(entry.created_at).toLocaleString([], {
-                                                month: 'short',
-                                                day: 'numeric',
-                                                hour: '2-digit',
-                                                minute: '2-digit',
+                                                month: 'short', day: 'numeric',
+                                                hour: '2-digit', minute: '2-digit',
                                             })}
                                         </td>
-                                        <td className="px-4 py-3 text-sm text-navy font-medium">
-                                            {entry.agent?.name || 'Unknown'}
-                                        </td>
-                                        <td className="px-4 py-3 text-xs text-charcoal">
+                                        <td className="font-medium text-navy">{entry.agent?.name || 'Unknown'}</td>
+                                        <td className="text-charcoal">
                                             {(entry.skill_used ?? 'action').replace(/_/g, ' ')}
                                         </td>
-                                        <td className="px-4 py-3 text-xs text-charcoal max-w-[300px] truncate">
-                                            {entry.output_summary}
+                                        <td className="max-w-[300px]">
+                                            <div className="line-clamp-1 text-charcoal">{entry.output_summary}</div>
                                         </td>
-                                        <td className="px-4 py-3">
-                                            <StatusBadge status={entry.status} size="sm" />
-                                        </td>
-                                        <td className="px-4 py-3">
+                                        <td><StatusBadge status={entry.status} size="sm" /></td>
+                                        <td>
                                             {entry.risk_level ? (
-                                                <StatusBadge status={entry.risk_level === 'critical' ? 'blocked' : entry.risk_level === 'high' ? 'blocked' : 'active'} size="sm" />
+                                                <StatusBadge status={entry.risk_level} size="sm" />
                                             ) : (
-                                                <span className="text-xs text-charcoal">—</span>
+                                                <span className="text-xs text-charcoal/40">—</span>
                                             )}
                                         </td>
                                     </tr>
@@ -394,56 +362,55 @@ function SkillsTab() {
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-charcoal">
-                    <Zap size={16} />
-                    <span className="text-sm font-medium">{skills.length} skills registered</span>
-                </div>
+            <div className="grid grid-cols-3 gap-4">
+                <StatCard label="Total Skills" value={skills.length} icon={<Zap size={18} />} />
+                <StatCard label="Active" value={skills.filter((s) => s.status === 'active').length} icon={<Zap size={18} />} />
+                <StatCard
+                    label="Total Runs"
+                    value={skills.reduce((s, sk) => s + sk.run_count, 0)}
+                    icon={<Activity size={18} />}
+                />
             </div>
 
-            <Card padding={false}>
+            <Card className="!p-0 overflow-hidden">
                 {loading ? (
-                    <div className="p-4"><SkeletonLoader variant="row" count={6} /></div>
+                    <div className="p-6"><SkeletonLoader variant="row" count={6} /></div>
                 ) : skills.length === 0 ? (
                     <EmptyState
                         icon={<Zap size={24} />}
-                        title="No skills registered"
-                        description="Skills will appear once agents are configured with execution playbooks."
+                        title="No skills found"
+                        description="Skills will appear once agents are configured."
                     />
                 ) : (
                     <div className="overflow-x-auto">
-                        <table className="w-full">
+                        <table>
                             <thead>
-                                <tr className="border-b border-light-gray">
-                                    <th className="text-left text-[11px] font-semibold text-charcoal uppercase tracking-wide px-4 py-3">Name</th>
-                                    <th className="text-left text-[11px] font-semibold text-charcoal uppercase tracking-wide px-4 py-3">Agent</th>
-                                    <th className="text-left text-[11px] font-semibold text-charcoal uppercase tracking-wide px-4 py-3">Category</th>
-                                    <th className="text-left text-[11px] font-semibold text-charcoal uppercase tracking-wide px-4 py-3">Run Count</th>
-                                    <th className="text-left text-[11px] font-semibold text-charcoal uppercase tracking-wide px-4 py-3">Last Run</th>
-                                    <th className="text-left text-[11px] font-semibold text-charcoal uppercase tracking-wide px-4 py-3">Status</th>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Agent</th>
+                                    <th>Category</th>
+                                    <th>Runs</th>
+                                    <th>Last Run</th>
+                                    <th>Status</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {skills.map((skill) => (
-                                    <tr key={skill.id} className="border-b border-light-gray/50 hover:bg-surface transition-colors">
-                                        <td className="px-4 py-3 text-sm font-medium text-navy">{skill.name}</td>
-                                        <td className="px-4 py-3 text-sm text-charcoal">
-                                            {skill.agent?.name || skill.agent_id}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <span className="text-[11px] bg-light-gray/60 text-charcoal px-2 py-0.5 rounded capitalize">
+                                    <tr key={skill.id}>
+                                        <td className="font-medium text-navy">{skill.name}</td>
+                                        <td>{skill.agent?.name || 'Unknown'}</td>
+                                        <td>
+                                            <span className="text-[11px] text-charcoal bg-light-gray/60 px-2 py-0.5 rounded capitalize">
                                                 {skill.category}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3 text-sm text-navy font-medium">{skill.run_count}</td>
-                                        <td className="px-4 py-3 text-xs text-charcoal">
+                                        <td className="font-medium">{skill.run_count}</td>
+                                        <td className="text-xs text-charcoal">
                                             {skill.last_run
                                                 ? new Date(skill.last_run).toLocaleDateString()
                                                 : 'Never'}
                                         </td>
-                                        <td className="px-4 py-3">
-                                            <StatusBadge status={skill.status} size="sm" />
-                                        </td>
+                                        <td><StatusBadge status={skill.status} size="sm" /></td>
                                     </tr>
                                 ))}
                             </tbody>

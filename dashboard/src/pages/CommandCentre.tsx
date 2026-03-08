@@ -7,8 +7,8 @@ import StatusBadge from '../components/ui/StatusBadge'
 import StatCard from '../components/ui/StatCard'
 import SkeletonLoader from '../components/ui/SkeletonLoader'
 import EmptyState from '../components/ui/EmptyState'
-import { getStatusColor } from '../lib/types'
 import ApprovalQueue from '../components/ui/ApprovalQueue'
+import { getStatusColor } from '../lib/types'
 import { NavLink } from 'react-router-dom'
 import {
     AlertTriangle,
@@ -22,19 +22,19 @@ import {
     Server,
     ListTodo,
     Bot,
-    Terminal,
+    ShieldCheck,
 } from 'lucide-react'
 import type { Deal } from '../lib/types'
 
 const DEPT_LINKS = [
-    { to: '/sales',     icon: TrendingUp,  label: 'Sales',          color: 'text-emerald-400' },
-    { to: '/marketing', icon: Megaphone,   label: 'Marketing',      color: 'text-purple-400' },
-    { to: '/finance',   icon: DollarSign,  label: 'Finance',        color: 'text-amber-400' },
-    { to: '/infra',     icon: Server,      label: 'Infrastructure', color: 'text-blue-400' },
-    { to: '/hr',        icon: Users,       label: 'HR',             color: 'text-pink-400' },
-    { to: '/tasks',     icon: ListTodo,    label: 'Task Board',     color: 'text-orange-400' },
-    { to: '/claude',    icon: Bot,         label: 'Claude Co-worker', color: 'text-teal' },
-    { to: '/omni',      icon: Terminal,    label: 'Omni-Update',    color: 'text-charcoal' },
+    { to: '/sales', icon: TrendingUp, label: 'Sales', color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
+    { to: '/marketing', icon: Megaphone, label: 'Marketing', color: 'text-purple-400', bg: 'bg-purple-400/10' },
+    { to: '/finance', icon: DollarSign, label: 'Finance', color: 'text-amber-400', bg: 'bg-amber-400/10' },
+    { to: '/infra', icon: Server, label: 'Infrastructure', color: 'text-blue-400', bg: 'bg-blue-400/10' },
+    { to: '/hr', icon: ShieldCheck, label: 'HR', color: 'text-pink-400', bg: 'bg-pink-400/10' },
+    { to: '/tasks', icon: ListTodo, label: 'Task Board', color: 'text-orange-400', bg: 'bg-orange-400/10' },
+    { to: '/claude', icon: Bot, label: 'Claude', color: 'text-teal', bg: 'bg-teal/10' },
+    { to: '/sales', icon: Users, label: 'Contacts', color: 'text-sky-400', bg: 'bg-sky-400/10' },
 ]
 
 const DEAL_STAGE_LABELS: Record<string, string> = {
@@ -54,6 +54,13 @@ const statusDotClass: Record<string, string> = {
     gray: 'bg-status-paused',
 }
 
+function getGreeting(): string {
+    const hour = new Date().getHours()
+    if (hour < 12) return 'Good morning'
+    if (hour < 17) return 'Good afternoon'
+    return 'Good evening'
+}
+
 export default function CommandCentre() {
     const { agents, loading: agentsLoading } = useAgents()
     const { tasks, loading: tasksLoading } = useTasks()
@@ -61,12 +68,12 @@ export default function CommandCentre() {
     const { entries, loading: activityLoading } = useActivityLog({ limit: 10 })
 
     const blockedTasks = tasks.filter((t) => t.status === 'blocked')
-    const pendingApprovals = entries.filter((e) => e.status === 'pending').length
+    const pendingApprovals = tasks.filter(
+        (t) => t.status === 'todo' && (t.priority === 'P0 - Critical' || t.priority === 'P1 - High')
+    ).length
 
     // Pipeline grouping
-    const pipelineStages = Object.keys(DEAL_STAGE_LABELS).filter(
-        (s) => s !== 'closed_lost'
-    )
+    const pipelineStages = Object.keys(DEAL_STAGE_LABELS).filter((s) => s !== 'closed_lost')
     const dealsByStage = pipelineStages.reduce<Record<string, Deal[]>>((acc, stage) => {
         acc[stage] = deals.filter((d) => d.stage === stage)
         return acc
@@ -90,22 +97,24 @@ export default function CommandCentre() {
     return (
         <div className="space-y-6 fade-in">
             {/* Page header */}
-            <div className="flex items-start justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-navy">Command Centre</h1>
-                    <p className="text-sm text-charcoal mt-1">Good morning, Nabeel — {today}</p>
-                </div>
+            <div>
+                <h1 className="text-2xl font-bold text-navy">Command Centre</h1>
+                <p className="text-sm text-charcoal mt-1">
+                    {getGreeting()}, Nabeel — {today}
+                </p>
             </div>
 
             {/* Quick Navigation — Departments */}
             <div className="grid grid-cols-4 lg:grid-cols-8 gap-2">
                 {DEPT_LINKS.map((dept) => (
                     <NavLink
-                        key={dept.to}
+                        key={dept.to + dept.label}
                         to={dept.to}
-                        className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-surface hover:bg-light-gray/40 border border-transparent hover:border-light-gray/60 transition-all group"
+                        className="flex flex-col items-center gap-2 p-3.5 rounded-xl bg-white hover:bg-white border border-transparent hover:border-light-gray/80 transition-all group card-interactive shadow-sm"
                     >
-                        <dept.icon size={18} className={`${dept.color} group-hover:scale-110 transition-transform`} />
+                        <div className={`w-9 h-9 rounded-xl ${dept.bg} flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                            <dept.icon size={17} className={dept.color} />
+                        </div>
                         <span className="text-[11px] font-medium text-charcoal text-center leading-tight">
                             {dept.label}
                         </span>
@@ -115,7 +124,10 @@ export default function CommandCentre() {
 
             {/* Agent heartbeat strip */}
             <Card>
-                <CardHeader title="Agent Status" subtitle={`${agents.filter(a => a.status === 'active').length} of ${agents.length} agents active`} />
+                <CardHeader
+                    title="Agent Status"
+                    subtitle={`${agents.filter((a) => a.status === 'active').length} of ${agents.length} agents active`}
+                />
                 {agentsLoading ? (
                     <SkeletonLoader variant="row" count={2} />
                 ) : agents.length === 0 ? (
@@ -127,13 +139,15 @@ export default function CommandCentre() {
                             return (
                                 <div
                                     key={agent.id}
-                                    className="flex flex-col items-center gap-1.5 p-3 rounded-lg bg-surface hover:bg-light-gray/40 transition-colors"
+                                    className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-surface hover:bg-light-gray/40 transition-colors"
                                 >
-                                    <div className="w-10 h-10 rounded-full bg-navy/10 flex items-center justify-center relative">
+                                    <div className="w-10 h-10 rounded-full bg-navy/8 flex items-center justify-center relative">
                                         <span className="text-xs font-semibold text-navy">
                                             {agent.name.slice(0, 2).toUpperCase()}
                                         </span>
-                                        <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${statusDotClass[color]}`} />
+                                        <span
+                                            className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${statusDotClass[color]}`}
+                                        />
                                     </div>
                                     <span className="text-[11px] font-medium text-navy text-center leading-tight truncate max-w-full">
                                         {agent.name}
@@ -152,12 +166,12 @@ export default function CommandCentre() {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatCard
                     label="Active MRR"
-                    value={`$${totalMRR.toLocaleString()}`}
+                    value={`£${totalMRR.toLocaleString()}`}
                     icon={<TrendingUp size={20} />}
                 />
                 <StatCard
                     label="Pipeline MRR"
-                    value={`$${pipelineMRR.toLocaleString()}`}
+                    value={`£${pipelineMRR.toLocaleString()}`}
                     icon={<Zap size={20} />}
                 />
                 <StatCard
@@ -173,7 +187,7 @@ export default function CommandCentre() {
             </div>
 
             {/* Action Center — Pending Approvals */}
-            <ApprovalQueue compact title="⚡ Action Center — Pending Approvals" />
+            <ApprovalQueue compact title="Action Center — Pending Approvals" />
 
             {/* Two-column: Blockers + Pipeline Snapshot */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -181,6 +195,7 @@ export default function CommandCentre() {
                 <Card>
                     <CardHeader
                         title="Blockers"
+                        icon={<AlertTriangle size={16} />}
                         subtitle={`${blockedTasks.length} task${blockedTasks.length !== 1 ? 's' : ''} blocked`}
                     />
                     {tasksLoading ? (
@@ -196,13 +211,11 @@ export default function CommandCentre() {
                             {blockedTasks.map((task) => (
                                 <div
                                     key={task.id}
-                                    className="flex items-start gap-3 p-3 rounded-lg bg-surface hover:bg-light-gray/30 transition-colors"
+                                    className="flex items-start gap-3 p-3 rounded-xl bg-surface hover:bg-light-gray/30 transition-colors"
                                 >
                                     <div className="w-2 h-2 rounded-full bg-status-blocked mt-1.5 flex-shrink-0" />
                                     <div className="min-w-0 flex-1">
-                                        <div className="text-sm font-medium text-navy truncate">
-                                            {task.title}
-                                        </div>
+                                        <div className="text-sm font-medium text-navy truncate">{task.title}</div>
                                         {task.blocker_path && (
                                             <div className="text-xs text-charcoal mt-0.5 line-clamp-2">
                                                 {task.blocker_path}
@@ -211,9 +224,7 @@ export default function CommandCentre() {
                                         <div className="flex items-center gap-3 mt-1.5">
                                             <StatusBadge status={task.priority} size="sm" />
                                             {task.agent && (
-                                                <span className="text-[11px] text-charcoal">
-                                                    {task.agent.name}
-                                                </span>
+                                                <span className="text-[11px] text-charcoal">{task.agent.name}</span>
                                             )}
                                             {task.due_date && (
                                                 <span className="text-[11px] text-charcoal">
@@ -232,7 +243,8 @@ export default function CommandCentre() {
                 <Card>
                     <CardHeader
                         title="Pipeline Snapshot"
-                        subtitle={`${deals.length} total deals`}
+                        icon={<TrendingUp size={16} />}
+                        subtitle={`${deals.length} total deals · £${(totalMRR + pipelineMRR).toLocaleString()} total value`}
                     />
                     {dealsLoading ? (
                         <SkeletonLoader variant="row" count={4} />
@@ -243,7 +255,7 @@ export default function CommandCentre() {
                             description="Deals will appear once your pipeline is active."
                         />
                     ) : (
-                        <div className="space-y-2">
+                        <div className="space-y-2.5">
                             {pipelineStages.map((stage) => {
                                 const stageDealsList = dealsByStage[stage] || []
                                 const stageMRR = stageDealsList.reduce((s, d) => s + (d.mrr || 0), 0)
@@ -257,14 +269,14 @@ export default function CommandCentre() {
                                         <div className="w-24 text-xs text-charcoal font-medium truncate">
                                             {DEAL_STAGE_LABELS[stage]}
                                         </div>
-                                        <div className="flex-1 h-6 bg-surface rounded-md overflow-hidden relative">
+                                        <div className="flex-1 h-7 bg-surface rounded-lg overflow-hidden relative">
                                             <div
-                                                className="h-full bg-teal/20 rounded-md transition-all duration-500"
+                                                className="h-full bg-teal/15 rounded-lg transition-all duration-500"
                                                 style={{ width: `${barWidth}%` }}
                                             />
-                                            <span className="absolute inset-0 flex items-center px-2 text-[11px] font-medium text-navy">
+                                            <span className="absolute inset-0 flex items-center px-3 text-[11px] font-medium text-navy">
                                                 {stageDealsList.length} deal{stageDealsList.length !== 1 ? 's' : ''}
-                                                {stageMRR > 0 && ` · $${stageMRR.toLocaleString()}`}
+                                                {stageMRR > 0 && ` · £${stageMRR.toLocaleString()}`}
                                             </span>
                                         </div>
                                     </div>
@@ -279,6 +291,7 @@ export default function CommandCentre() {
             <Card>
                 <CardHeader
                     title="Activity Feed"
+                    icon={<Activity size={16} />}
                     subtitle="Last 10 actions across all agents"
                     action={
                         <div className="flex items-center gap-1 text-charcoal">
@@ -300,9 +313,9 @@ export default function CommandCentre() {
                         {entries.map((entry) => (
                             <div
                                 key={entry.id}
-                                className="flex items-start gap-3 px-3 py-2.5 rounded-lg hover:bg-surface transition-colors"
+                                className="flex items-start gap-3 px-3 py-2.5 rounded-xl hover:bg-surface transition-colors"
                             >
-                                <div className="w-7 h-7 rounded-full bg-navy/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <div className="w-7 h-7 rounded-full bg-navy/8 flex items-center justify-center flex-shrink-0 mt-0.5">
                                     <span className="text-[10px] font-semibold text-navy">
                                         {(entry.agent?.name || 'AG').slice(0, 2).toUpperCase()}
                                     </span>

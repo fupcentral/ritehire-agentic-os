@@ -1,16 +1,19 @@
-import { type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 
 interface CardProps {
     children: ReactNode
     className?: string
-    size?: 'default' | 'sm'
-    padding?: boolean
+    compact?: boolean
+    interactive?: boolean
+    onClick?: () => void
 }
 
-export default function Card({ children, className = '', size = 'default', padding = true }: CardProps) {
-    const base = size === 'sm' ? 'card-sm' : 'card'
+export default function Card({ children, className = '', compact = false, interactive = false, onClick }: CardProps) {
     return (
-        <div className={`${base} ${!padding ? '!p-0' : ''} ${className}`}>
+        <div
+            className={`${compact ? 'card-sm' : 'card'} ${interactive ? 'card-interactive cursor-pointer' : ''} ${className}`}
+            onClick={onClick}
+        >
             {children}
         </div>
     )
@@ -20,19 +23,26 @@ interface CardHeaderProps {
     title: string
     subtitle?: string
     action?: ReactNode
-    className?: string
+    icon?: ReactNode
 }
 
-export function CardHeader({ title, subtitle, action, className = '' }: CardHeaderProps) {
+export function CardHeader({ title, subtitle, action, icon }: CardHeaderProps) {
     return (
-        <div className={`flex items-center justify-between mb-5 ${className}`}>
-            <div>
-                <h3 className="text-[15px] font-semibold text-navy tracking-tight">{title}</h3>
-                {subtitle && (
-                    <p className="text-[11px] text-charcoal/50 mt-0.5 font-medium">{subtitle}</p>
+        <div className="flex items-start justify-between mb-5">
+            <div className="flex items-center gap-2.5">
+                {icon && (
+                    <div className="w-8 h-8 rounded-lg bg-teal/8 flex items-center justify-center text-teal">
+                        {icon}
+                    </div>
                 )}
+                <div>
+                    <h3 className="text-[15px] font-semibold text-navy leading-tight">{title}</h3>
+                    {subtitle && (
+                        <p className="text-xs text-charcoal mt-0.5">{subtitle}</p>
+                    )}
+                </div>
             </div>
-            {action}
+            {action && <div>{action}</div>}
         </div>
     )
 }

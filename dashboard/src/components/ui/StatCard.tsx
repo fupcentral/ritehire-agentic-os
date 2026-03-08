@@ -1,30 +1,30 @@
-import { type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 
 interface StatCardProps {
     label: string
     value: string | number
     icon?: ReactNode
     trend?: string
-    className?: string
+    trendUp?: boolean
 }
 
-export default function StatCard({ label, value, icon, trend, className = '' }: StatCardProps) {
+export default function StatCard({ label, value, icon, trend, trendUp }: StatCardProps) {
     return (
-        <div className={`card-sm flex items-start gap-3.5 ${className}`}>
+        <div className="card-sm flex items-start justify-between group">
+            <div>
+                <div className="text-xs font-medium text-charcoal mb-1">{label}</div>
+                <div className="text-xl font-bold text-navy">{value}</div>
+                {trend && (
+                    <div className={`text-[11px] font-medium mt-1.5 ${trendUp ? 'text-teal' : 'text-red-500'}`}>
+                        {trend}
+                    </div>
+                )}
+            </div>
             {icon && (
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal/15 to-teal/5 flex items-center justify-center text-teal flex-shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-teal/8 flex items-center justify-center text-teal group-hover:bg-teal/12 transition-colors">
                     {icon}
                 </div>
             )}
-            <div className="min-w-0">
-                <p className="text-[11px] text-charcoal/60 font-semibold uppercase tracking-wider truncate">
-                    {label}
-                </p>
-                <p className="text-xl font-bold text-navy mt-0.5 tracking-tight">{value}</p>
-                {trend && (
-                    <p className="text-[11px] text-charcoal/50 mt-0.5 font-medium">{trend}</p>
-                )}
-            </div>
         </div>
     )
 }
