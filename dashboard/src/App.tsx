@@ -15,8 +15,8 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route element={<AppShell />}>
-          <Route path="/" element={<OmniUpdate />} />
-          <Route path="/command" element={<CommandCentre />} />
+          <Route path="/" element={<CommandCentre />} />
+          <Route path="/omni" element={<OmniUpdate />} />
           <Route path="/sales" element={<Sales />} />
           <Route path="/marketing" element={<Marketing />} />
           <Route path="/finance" element={<Finance />} />

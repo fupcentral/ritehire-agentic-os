@@ -9,6 +9,7 @@ import SkeletonLoader from '../components/ui/SkeletonLoader'
 import EmptyState from '../components/ui/EmptyState'
 import { getStatusColor } from '../lib/types'
 import ApprovalQueue from '../components/ui/ApprovalQueue'
+import { NavLink } from 'react-router-dom'
 import {
     AlertTriangle,
     Activity,
@@ -16,8 +17,25 @@ import {
     Users,
     Clock,
     Zap,
+    Megaphone,
+    DollarSign,
+    Server,
+    ListTodo,
+    Bot,
+    Terminal,
 } from 'lucide-react'
 import type { Deal } from '../lib/types'
+
+const DEPT_LINKS = [
+    { to: '/sales',     icon: TrendingUp,  label: 'Sales',          color: 'text-emerald-400' },
+    { to: '/marketing', icon: Megaphone,   label: 'Marketing',      color: 'text-purple-400' },
+    { to: '/finance',   icon: DollarSign,  label: 'Finance',        color: 'text-amber-400' },
+    { to: '/infra',     icon: Server,      label: 'Infrastructure', color: 'text-blue-400' },
+    { to: '/hr',        icon: Users,       label: 'HR',             color: 'text-pink-400' },
+    { to: '/tasks',     icon: ListTodo,    label: 'Task Board',     color: 'text-orange-400' },
+    { to: '/claude',    icon: Bot,         label: 'Claude Co-worker', color: 'text-teal' },
+    { to: '/omni',      icon: Terminal,    label: 'Omni-Update',    color: 'text-charcoal' },
+]
 
 const DEAL_STAGE_LABELS: Record<string, string> = {
     prospecting: 'Prospecting',
@@ -62,12 +80,37 @@ export default function CommandCentre() {
         .filter((d) => !['closed_won', 'closed_lost'].includes(d.stage))
         .reduce((sum, d) => sum + (d.mrr || 0), 0)
 
+    const today = new Date().toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+    })
+
     return (
         <div className="space-y-6 fade-in">
             {/* Page header */}
-            <div>
-                <h1 className="text-2xl font-bold text-navy">Command Centre</h1>
-                <p className="text-sm text-charcoal mt-1">Your morning view — everything at a glance.</p>
+            <div className="flex items-start justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold text-navy">Command Centre</h1>
+                    <p className="text-sm text-charcoal mt-1">Good morning, Nabeel — {today}</p>
+                </div>
+            </div>
+
+            {/* Quick Navigation — Departments */}
+            <div className="grid grid-cols-4 lg:grid-cols-8 gap-2">
+                {DEPT_LINKS.map((dept) => (
+                    <NavLink
+                        key={dept.to}
+                        to={dept.to}
+                        className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-surface hover:bg-light-gray/40 border border-transparent hover:border-light-gray/60 transition-all group"
+                    >
+                        <dept.icon size={18} className={`${dept.color} group-hover:scale-110 transition-transform`} />
+                        <span className="text-[11px] font-medium text-charcoal text-center leading-tight">
+                            {dept.label}
+                        </span>
+                    </NavLink>
+                ))}
             </div>
 
             {/* Agent heartbeat strip */}
